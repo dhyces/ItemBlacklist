@@ -23,8 +23,8 @@ public abstract class ContainerMixin {
     @Inject(at = @At(value = "HEAD"), method = "broadcastChanges")
     public void onDetectAndSendChanges(CallbackInfo ci) {
         for(int i = 0; i < this.slots.size(); ++i) {
-            if(ItemBlacklist.shouldDelete(this.getItems().get(i))) {
-                this.getItems().set(i, ItemStack.EMPTY);
+            if(ItemBlacklist.shouldDelete(this.slots.get(i).getItem())) {
+                this.slots.get(i).set(ItemStack.EMPTY);
             }
         }
     }

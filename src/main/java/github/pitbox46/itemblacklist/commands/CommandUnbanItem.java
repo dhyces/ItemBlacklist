@@ -12,8 +12,8 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.item.ItemArgument;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public class CommandUnbanItem implements Command<CommandSourceStack> {
     private static final CommandUnbanItem CMD = new CommandUnbanItem();
@@ -30,12 +30,12 @@ public class CommandUnbanItem implements Command<CommandSourceStack> {
     }
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    public int run(CommandContext<CommandSourceStack> context) {
         try {
             JsonUtils.removeItemFromJson(ItemBlacklist.BANLIST, ItemArgument.getItem(context, "item").getItem());
             Utils.broadcastMessage(context.getSource().getServer(),
                     Component.literal("Item unbanned: ")
-                            .append(ForgeRegistries.ITEMS.getKey(ItemArgument.getItem(context, "item").getItem()).toString()));
+                            .append(BuiltInRegistries.ITEM.getKey(ItemArgument.getItem(context, "item").getItem()).toString()));
         } catch(IndexOutOfBoundsException e) {
             context.getSource().sendFailure(Component.literal("The item could not be unbanned."));
         }

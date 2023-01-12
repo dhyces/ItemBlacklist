@@ -12,13 +12,13 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.item.ItemArgument;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public class CommandBanItem implements Command<CommandSourceStack> {
     private static final CommandBanItem CMD = new CommandBanItem();
@@ -37,7 +37,7 @@ public class CommandBanItem implements Command<CommandSourceStack> {
     }
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    public int run(CommandContext<CommandSourceStack> context) {
         return banItem(context, ItemArgument.getItem(context, "item").getItem());
     }
 
@@ -47,8 +47,7 @@ public class CommandBanItem implements Command<CommandSourceStack> {
         JsonUtils.appendItemToJson(ItemBlacklist.BANLIST, item);
         PlayerList playerList = context.getSource().getServer().getPlayerList();
         Utils.broadcastMessage(context.getSource().getServer(),
-                Component.literal("Item banned: ")
-                        .append(ForgeRegistries.ITEMS.getKey(item).toString()));
+                Component.literal("Item banned: ").append(BuiltInRegistries.ITEM.getKey(item).toString()));
         for(ServerPlayer player : playerList.getPlayers()) {
             for(int i = 0; i < player.getInventory().getContainerSize(); i++) {
                 if(ItemBlacklist.shouldDelete(player.getInventory().getItem(i)))
