@@ -7,9 +7,8 @@ import github.pitbox46.itemblacklist.core.ModCommands;
 import github.pitbox46.itemblacklist.mixins.EntityAccessor;
 import github.pitbox46.itemblacklist.utils.FileUtils;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
@@ -54,8 +53,8 @@ public class ItemBlacklist implements ModInitializer {
         Config.instance = FileUtils.readConfigFromJson(banList);
     }
 
-    private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext, Commands.CommandSelection environment) {
-        ModCommands.register(dispatcher, buildContext);
+    private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher,  boolean isDedicated) {
+        ModCommands.register(dispatcher);
     }
 
     public static boolean requestConfigSet(@Nonnull Config newConfig) {

@@ -7,11 +7,11 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import github.pitbox46.itemblacklist.Config;
 import github.pitbox46.itemblacklist.core.PermissionLevel;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 
 public class BanListCommand {
 
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
         return Commands.literal("list")
                 .executes(BanListCommand::list)
                 .then(Commands.argument("permission_level", IntegerArgumentType.integer(0, 4)).executes(BanListCommand::listWithPermission));
@@ -29,24 +29,24 @@ public class BanListCommand {
         int permissionLevel = IntegerArgumentType.getInteger(context, "permission_level");
         CommandSourceStack commandSource = context.getSource();
 
-        commandSource.sendSystemMessage(createBannedItemsComponent(PermissionLevel.getFromInt(permissionLevel)));
+        commandSource.sendSuccess(createBannedItemsComponent(PermissionLevel.getFromInt(permissionLevel)), false);
         return SINGLE_SUCCESS;
     }
 
     private static int list(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack commandSource = context.getSource();
 
-        commandSource.sendSystemMessage(Component.literal("Items banned: "));
-        commandSource.sendSystemMessage(createBannedItemsComponent(PermissionLevel.LEVEL_0));
-        commandSource.sendSystemMessage(createBannedItemsComponent(PermissionLevel.LEVEL_1));
-        commandSource.sendSystemMessage(createBannedItemsComponent(PermissionLevel.LEVEL_2));
-        commandSource.sendSystemMessage(createBannedItemsComponent(PermissionLevel.LEVEL_3));
-        commandSource.sendSystemMessage(createBannedItemsComponent(PermissionLevel.LEVEL_4));
+        commandSource.sendSuccess(new TextComponent("Items banned: "), false);
+        commandSource.sendSuccess(createBannedItemsComponent(PermissionLevel.LEVEL_0), false);
+        commandSource.sendSuccess(createBannedItemsComponent(PermissionLevel.LEVEL_1), false);
+        commandSource.sendSuccess(createBannedItemsComponent(PermissionLevel.LEVEL_2), false);
+        commandSource.sendSuccess(createBannedItemsComponent(PermissionLevel.LEVEL_3), false);
+        commandSource.sendSuccess(createBannedItemsComponent(PermissionLevel.LEVEL_4), false);
         return SINGLE_SUCCESS;
     }
 
     private static MutableComponent createBannedItemsComponent(PermissionLevel permissionLevel) {
-        return appendToMessage(Component.literal(permissionLevel.getUserFriendlyName() + " Permission Banned Items: "), permissionLevel);
+        return appendToMessage(new TextComponent(permissionLevel.getUserFriendlyName() + " Permission Banned Items: "), permissionLevel);
     }
 
     private static MutableComponent appendToMessage(MutableComponent levelMessage, PermissionLevel permissionLevel) {

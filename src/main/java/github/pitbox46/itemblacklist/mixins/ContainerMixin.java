@@ -4,6 +4,7 @@ import github.pitbox46.itemblacklist.ItemBlacklist;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -40,7 +41,7 @@ public abstract class ContainerMixin {
             }
         }
         if (nullableOwner instanceof ServerPlayer && !bannedItems.isEmpty()) {
-            MutableComponent message = Component.literal("");
+            MutableComponent message = new TextComponent("");
             boolean isSingleItem = bannedItems.size() == 1;
             message.append(bannedItems.pop());
             for (Component item : bannedItems) {

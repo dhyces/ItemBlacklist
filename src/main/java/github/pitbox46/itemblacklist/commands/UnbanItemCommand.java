@@ -10,23 +10,22 @@ import github.pitbox46.itemblacklist.ItemBlacklist;
 import github.pitbox46.itemblacklist.core.PermissionLevel;
 import github.pitbox46.itemblacklist.utils.FileUtils;
 import github.pitbox46.itemblacklist.utils.Utils;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.item.ItemStack;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 
 public class UnbanItemCommand {
-    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+    public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
         return Commands
                 .literal("unban")
                 .requires(cs -> cs.hasPermission(2))
-                .then(Commands.argument("item", ItemArgument.item(context))
+                .then(Commands.argument("item", ItemArgument.item())
                         .executes(UnbanItemCommand::unbanItem).then(Commands.argument("permission_level", IntegerArgumentType.integer(0, 4))
                                         .executes(UnbanItemCommand::unbanItemWithPermission)
                         )
@@ -43,7 +42,7 @@ public class UnbanItemCommand {
 
             removeItemWithPermission(context.getSource(), PermissionLevel.getFromInt(toLevel), stack);
         } catch(IndexOutOfBoundsException | CommandSyntaxException e) {
-            context.getSource().sendFailure(Component.literal("The item could not be unbanned."));
+            context.getSource().sendFailure(new TextComponent("The item could not be unbanned."));
         }
         return SINGLE_SUCCESS;
     }
@@ -53,7 +52,7 @@ public class UnbanItemCommand {
             ItemInput input = ItemArgument.getItem(context, "item");
             removeItem(context.getSource(), input.createItemStack(1, false));
         } catch(IndexOutOfBoundsException | CommandSyntaxException e) {
-            context.getSource().sendFailure(Component.literal("The item could not be unbanned."));
+            context.getSource().sendFailure(new TextComponent("The item could not be unbanned."));
         }
         return SINGLE_SUCCESS;
     }
@@ -63,7 +62,7 @@ public class UnbanItemCommand {
         checkPermission(context.getSource(), permsNeeded);
 
         FileUtils.removeAllItemsAndSave(ItemBlacklist.banList);
-        Utils.broadcastMessage(context.getSource().getServer(), Component.literal("All items unbanned"));
+        context.getSource().sendSuccess(new TextComponent("All items unbanned"), true);
         return SINGLE_SUCCESS;
     }
 
@@ -73,7 +72,7 @@ public class UnbanItemCommand {
         checkPermission(context.getSource(), permissionLevel);
 
         FileUtils.removeAllItemsFromPermissionAndSave(ItemBlacklist.banList, permissionLevel);
-        Utils.broadcastMessage(context.getSource().getServer(), Component.literal("All items unbanned for " + permissionLevel.getUserFriendlyName()));
+        context.getSource().sendSuccess(new TextComponent("All items unbanned for " + permissionLevel.getUserFriendlyName()), true);
         return SINGLE_SUCCESS;
     }
 
@@ -81,14 +80,14 @@ public class UnbanItemCommand {
         checkPermission(commandSource, permissionLevel);
 
         FileUtils.removeDownToAndSave(ItemBlacklist.banList, permissionLevel, itemStack);
-        Utils.broadcastMessage(commandSource.getServer(), Component.literal("Item unbanned: ").append(itemStack.getDisplayName()).append(" for " + permissionLevel.getUserFriendlyName()));
+        commandSource.sendSuccess(new TextComponent("Item unbanned: ").append(itemStack.getDisplayName()).append(" for " + permissionLevel.getUserFriendlyName()), true);
     }
 
     private static void removeItem(CommandSourceStack commandSource, ItemStack itemStack) {
         checkPermission(commandSource, getHighestPermsNeeded());
 
         FileUtils.removeItemAndSave(ItemBlacklist.banList, itemStack);
-        Utils.broadcastMessage(commandSource.getServer(), Component.literal("Item unbanned: ").append(itemStack.getDisplayName()));
+        commandSource.sendSuccess(new TextComponent("Item unbanned: ").append(itemStack.getDisplayName()), true);
     }
 
     private static PermissionLevel getHighestPermsNeeded() {
@@ -102,7 +101,7 @@ public class UnbanItemCommand {
 
     private static void checkPermission(CommandSourceStack commandSource, PermissionLevel permissionLevel) {
         if (!commandSource.hasPermission(permissionLevel.ordinal())) {
-            throw new CommandRuntimeException(Component.literal("You do not have sufficient permissions. Required: " + permissionLevel.getUserFriendlyName()));
+            throw new CommandRuntimeException(new TextComponent("You do not have sufficient permissions. Required: " + permissionLevel.getUserFriendlyName()));
         }
     }
 }

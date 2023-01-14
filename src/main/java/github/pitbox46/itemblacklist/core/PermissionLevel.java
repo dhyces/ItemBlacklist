@@ -10,7 +10,7 @@ public enum PermissionLevel implements StringRepresentable {
     LEVEL_3("Level 3"), // MULTIPLAYER MANAGEMENT
     LEVEL_4("Level 4"); // SERVER OPERATOR
 
-    public static final Codec<PermissionLevel> CODEC = StringRepresentable.fromEnum(PermissionLevel::values);
+    public static final Codec<PermissionLevel> CODEC = StringRepresentable.fromEnum(PermissionLevel::values, PermissionLevel::valueOf);
 
     private final String userFriendlyName;
 

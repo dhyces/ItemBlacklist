@@ -8,13 +8,13 @@ import github.pitbox46.itemblacklist.core.ItemStackData;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public class Utils {
@@ -31,9 +31,5 @@ public class Utils {
                         itemStacks -> Optional.of(itemStacks == null ? List.of() : List.copyOf(itemStacks))
                 )
                 .forGetter(configFunction);
-    }
-
-    public static void broadcastMessage(MinecraftServer server, Component component) {
-            server.getPlayerList().broadcastSystemMessage(component, false);
     }
 }
