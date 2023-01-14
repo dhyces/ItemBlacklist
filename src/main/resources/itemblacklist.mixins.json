@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "github.pitbox46.itemblacklist.mixins",
   "compatibilityLevel": "JAVA_17",
-  "refmap": "itemblacklist.refmap.json",
+  "refmap": "itemblacklist-refmap.json",
   "mixins": [
     "BlockEntityMixin",
     "ContainerMixin",

@@ -9,7 +9,6 @@ buildscript {
 
 plugins {
     id 'fabric-loom' version '1.0-SNAPSHOT'
-    id 'maven-publish'
     id 'java'
     id 'idea'
 }
@@ -35,7 +34,13 @@ idea {
     }
 }
 
-sourceSets.main.resources { srcDir 'src/generated/resources' }
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
 
 // Example for how to get properties into the manifest for reading by the runtime..
 jar {
@@ -52,5 +57,3 @@ jar {
         ])
     }
 }
-
-jar.finalizedBy('reobfJar')
