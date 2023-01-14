@@ -7,12 +7,8 @@ import github.pitbox46.itemblacklist.Config;
 import github.pitbox46.itemblacklist.core.ItemStackData;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.HashSet;
@@ -23,7 +19,7 @@ import java.util.function.Function;
 
 public class Utils {
 
-    public static final Codec<ItemStackData> EITHER_ITEM_CODEC = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), ItemStackData.CODEC).xmap(
+    public static final Codec<ItemStackData> EITHER_ITEM_CODEC = Codec.either(Registry.ITEM.byNameCodec(), ItemStackData.CODEC).xmap(
             either -> either.left().isEmpty() ? either.right().get() : new ItemStackData(either.left().get(), new CompoundTag()),
             data -> data.tag().isEmpty() ? Either.left(data.item()) : Either.right(data)
     );
@@ -38,12 +34,6 @@ public class Utils {
     }
 
     public static void broadcastMessage(MinecraftServer server, Component component) {
-        Optional<Registry<ChatType>> registryOptional = server.overworld().registryAccess().registry(Registries.CHAT_TYPE);
-        if (registryOptional.isEmpty()) {
-            throw new IllegalStateException("Dynamic registry of type {ChatType} was not found");
-        }
-        Registry<ChatType> reg = registryOptional.get();
-        ChatType.Bound bound = new ChatType.Bound(reg.get(ChatType.CHAT), Component.literal("SERVER"), null);
-        server.getPlayerList().broadcastChatMessage(PlayerChatMessage.system(component.getString()), server.createCommandSourceStack(), bound);
+            server.getPlayerList().broadcastSystemMessage(component, false);
     }
 }

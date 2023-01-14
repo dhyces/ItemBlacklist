@@ -55,9 +55,7 @@ public class ItemBlacklist implements ModInitializer {
     }
 
     private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext, Commands.CommandSelection environment) {
-//        if (environment.includeDedicated) { //TODO:
-            ModCommands.register(dispatcher, buildContext);
-//        }
+        ModCommands.register(dispatcher, buildContext);
     }
 
     public static boolean requestConfigSet(@Nonnull Config newConfig) {

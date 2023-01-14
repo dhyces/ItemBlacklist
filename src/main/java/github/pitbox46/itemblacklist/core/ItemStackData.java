@@ -2,7 +2,7 @@ package github.pitbox46.itemblacklist.core;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public record ItemStackData(Item item, CompoundTag tag) {
     public static final Codec<ItemStackData> CODEC = Codec.pair(
-            BuiltInRegistries.ITEM.byNameCodec().fieldOf("item").codec(),
+            Registry.ITEM.byNameCodec().fieldOf("item").codec(),
                     Codec.optionalField("tag", CompoundTag.CODEC).codec()
             ).xmap(
                     pair -> new ItemStackData(pair.getFirst(), pair.getSecond().orElse(new CompoundTag())),
