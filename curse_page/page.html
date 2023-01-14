@@ -3,9 +3,9 @@
 <p>This mod is primarily a server utility meant for modded servers to prevent players from accessing certain items, however it can be used for singleplayer modpacks as well (not recommended unless necessary)</p>
 <p>&nbsp;</p>
 <p><strong>Commands:</strong></p>
-<p>itemblacklist ban <item|hand> {optional}<permission_level></p>
-<p>itemblacklist unban <item|all> {optional}<permission_level></p>
-<p>itemblacklist list {optional}<permission_level></p>
+<p>/itemblacklist ban &lt;item|hand&gt; {optional}&lt;permission_level&gt;</p>
+<p>/itemblacklist unban &lt;item|all&gt; {optional}&lt;permission_level&gt;</p>
+<p>/itemblacklist list {optional}&lt;permission_level&gt;</p>
 <p>&nbsp;</p>
 <p>The default config is generated in the 'config' folder of your Minecraft profile. The config that is used in-game is generated in the world save, ie "saves/New World/serverconfig/itemblacklist.json". The format is as follows:</p>
 <p>&nbsp;</p>
@@ -21,11 +21,19 @@
 <p>&nbsp;</p>
 <p>{</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;"level_0_ban_list": [</p>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"minecraft:enderman_spawn_egg"</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"minecraft:enderman_spawn_egg",</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"minecraft:creeper_spawn_egg"</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;],</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;"level_1_ban_list": [],</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;"level_2_ban_list": [],</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;"level_3_ban_list": [],</p>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;"level_4_ban_list": []</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;"level_4_ban_list": [</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"minecraft:command_block"</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;]</p>
 <p>}</p>
 <p>&nbsp;</p>
+<p><strong>TODO:</strong></p>
+<ol>
+	<li>Allow more control over the banned items</li>
+	<li>Allow bans to have an attached reason</li>
+</ol>
