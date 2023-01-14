@@ -18,7 +18,7 @@ public abstract class MerchantMenuMixin {
         if(cir.getReturnValue() != null) {
             MerchantOffers returnedOffers = new MerchantOffers(Util.make(new CompoundTag(), tag -> tag.put("Recipes", new ListTag())));
             cir.getReturnValue().forEach(offer -> {
-                if(!ItemBlacklist.shouldDelete(offer.assemble()))
+                if(!ItemBlacklist.shouldDelete(null, offer.assemble()))
                     returnedOffers.add(offer);
             });
             cir.setReturnValue(returnedOffers);
