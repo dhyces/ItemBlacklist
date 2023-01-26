@@ -20,7 +20,7 @@ import java.util.function.Function;
 public class Utils {
 
     public static final Codec<ItemStackData> EITHER_ITEM_CODEC = Codec.either(Registry.ITEM.byNameCodec(), ItemStackData.CODEC).xmap(
-            either -> either.left().isEmpty() ? either.right().get() : new ItemStackData(either.left().get(), new CompoundTag()),
+            either -> either.left().isEmpty() ? either.right().get() : new ItemStackData(either.left().get(), Optional.empty()),
             data -> data.tag().isEmpty() ? Either.left(data.item()) : Either.right(data)
     );
 
