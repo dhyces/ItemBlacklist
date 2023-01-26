@@ -35,6 +35,11 @@ public class Config {
     }
 
     private Config() {
+        bannedItems.put(PermissionLevel.LEVEL_0, new HashSet<>());
+        bannedItems.put(PermissionLevel.LEVEL_1, new HashSet<>());
+        bannedItems.put(PermissionLevel.LEVEL_2, new HashSet<>());
+        bannedItems.put(PermissionLevel.LEVEL_3, new HashSet<>());
+        bannedItems.put(PermissionLevel.LEVEL_4, new HashSet<>());
     }
 
     private Config(Set<ItemStackData> noPermission, Set<ItemStackData> bypassProtection, Set<ItemStackData> cheats, Set<ItemStackData> multiplayerManager, Set<ItemStackData> operator) {
