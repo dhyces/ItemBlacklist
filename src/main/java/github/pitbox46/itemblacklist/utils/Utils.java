@@ -4,12 +4,11 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import github.pitbox46.itemblacklist.Config;
-import github.pitbox46.itemblacklist.core.ItemStackData;
+import github.pitbox46.itemblacklist.core.BanData;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
@@ -23,15 +22,15 @@ import java.util.function.Function;
 
 public class Utils {
 
-    public static final Codec<ItemStackData> EITHER_ITEM_CODEC = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), ItemStackData.CODEC).xmap(
-            either -> either.left().isEmpty() ? either.right().get() : new ItemStackData(either.left().get(), Optional.empty()),
+    public static final Codec<BanData> EITHER_ITEM_CODEC = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), BanData.CODEC).xmap(
+            either -> either.left().isEmpty() ? either.right().get() : new BanData(either.left().get(), Optional.empty()),
             data -> data.tag().isEmpty() ? Either.left(data.item()) : Either.right(data)
     );
 
-    public static RecordCodecBuilder<Config, Set<ItemStackData>> optionalConfigSet(String field, Function<Config, Set<ItemStackData>> configFunction) {
+    public static RecordCodecBuilder<Config, Set<BanData>> optionalConfigSet(String field, Function<Config, Set<BanData>> configFunction) {
         return Codec.optionalField(field, Utils.EITHER_ITEM_CODEC.listOf()).orElse(Optional.of(List.of()))
                 .xmap(
-                        optional -> optional.isEmpty() ? new HashSet<ItemStackData>() : (Set<ItemStackData>)Util.make(new HashSet<ItemStackData>(), objects -> objects.addAll(optional.get())),
+                        optional -> optional.isEmpty() ? new HashSet<BanData>() : (Set<BanData>)Util.make(new HashSet<BanData>(), objects -> objects.addAll(optional.get())),
                         itemStacks -> Optional.of(itemStacks == null ? List.of() : List.copyOf(itemStacks))
                 )
                 .forGetter(configFunction);

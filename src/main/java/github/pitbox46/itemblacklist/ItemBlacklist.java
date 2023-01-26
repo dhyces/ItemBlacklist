@@ -2,7 +2,7 @@ package github.pitbox46.itemblacklist;
 
 import com.mojang.brigadier.CommandDispatcher;
 import github.pitbox46.itemblacklist.api.BanItemEvent;
-import github.pitbox46.itemblacklist.core.ItemStackData;
+import github.pitbox46.itemblacklist.core.BanData;
 import github.pitbox46.itemblacklist.core.ModCommands;
 import github.pitbox46.itemblacklist.mixins.EntityAccessor;
 import github.pitbox46.itemblacklist.utils.FileUtils;
@@ -74,6 +74,6 @@ public class ItemBlacklist implements ModInitializer {
         } else if (player != null) {
             permissionLevel = ((EntityAccessor)player).invokeGetPermissionLevel();
         }
-        return shouldBan && Config.getInstance().getAllBannedItems(permissionLevel).contains(ItemStackData.of(stack));
+        return shouldBan && Config.getInstance().getAllBannedItems(permissionLevel).contains(BanData.of(stack));
     }
 }

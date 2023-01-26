@@ -3,7 +3,7 @@ package github.pitbox46.itemblacklist;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import github.pitbox46.itemblacklist.core.ItemStackData;
+import github.pitbox46.itemblacklist.core.BanData;
 import github.pitbox46.itemblacklist.core.PermissionLevel;
 import github.pitbox46.itemblacklist.utils.Utils;
 import net.minecraft.world.item.ItemStack;
@@ -24,7 +24,7 @@ public class Config {
                     Utils.optionalConfigSet("level_4_ban_list", config -> config.bannedItems.get(PermissionLevel.LEVEL_4))
             ).apply(instance, Config::new)
     );
-    private final Map<PermissionLevel, Set<ItemStackData>> bannedItems = new EnumMap<>(PermissionLevel.class);
+    private final Map<PermissionLevel, Set<BanData>> bannedItems = new EnumMap<>(PermissionLevel.class);
     static Config instance;
 
     public static Config getInstance() {
@@ -42,7 +42,7 @@ public class Config {
         bannedItems.put(PermissionLevel.LEVEL_4, new HashSet<>());
     }
 
-    private Config(Set<ItemStackData> noPermission, Set<ItemStackData> bypassProtection, Set<ItemStackData> cheats, Set<ItemStackData> multiplayerManager, Set<ItemStackData> operator) {
+    private Config(Set<BanData> noPermission, Set<BanData> bypassProtection, Set<BanData> cheats, Set<BanData> multiplayerManager, Set<BanData> operator) {
         bannedItems.put(PermissionLevel.LEVEL_0, noPermission);
         bannedItems.put(PermissionLevel.LEVEL_1, bypassProtection);
         bannedItems.put(PermissionLevel.LEVEL_2, cheats);
@@ -52,8 +52,8 @@ public class Config {
 
     @Nullable
     public PermissionLevel getPermissionLevel(ItemStack stack) {
-        for (Map.Entry<PermissionLevel, Set<ItemStackData>> entry : bannedItems.entrySet()) {
-            if (entry.getValue().contains(ItemStackData.of(stack))) {
+        for (Map.Entry<PermissionLevel, Set<BanData>> entry : bannedItems.entrySet()) {
+            if (entry.getValue().contains(BanData.of(stack))) {
                 return entry.getKey();
             }
         }
@@ -70,8 +70,8 @@ public class Config {
      * @param permissionLevel The max permission level to collect for
      * @return Every item stack that is banned for each permission level equal to and below the given level
      */
-    public Set<ItemStackData> getAllBannedItems(PermissionLevel permissionLevel) {
-        ImmutableSet.Builder<ItemStackData> builder = ImmutableSet.builder();
+    public Set<BanData> getAllBannedItems(PermissionLevel permissionLevel) {
+        ImmutableSet.Builder<BanData> builder = ImmutableSet.builder();
         int i = PermissionLevel.values().length - 1;
         int min = permissionLevel.ordinal();
         while (i >= min) {
@@ -81,30 +81,30 @@ public class Config {
         return builder.build();
     }
 
-    public Set<ItemStackData> getAllBannedItems(int permissionLevel) {
+    public Set<BanData> getAllBannedItems(int permissionLevel) {
         return getAllBannedItems(PermissionLevel.getFromInt(permissionLevel));
     }
 
     public boolean addItem(PermissionLevel permissionLevel, final ItemStack bannedItem) {
-        ItemStackData data = ItemStackData.of(bannedItem);
+        BanData data = BanData.of(bannedItem);
         PermissionLevel existingPermission = getPermissionLevel(bannedItem);
         if (existingPermission != null) removeItem(existingPermission, bannedItem);
         return bannedItems.get(permissionLevel).add(data);
     }
 
     public boolean removeItem(PermissionLevel permissionLevel, final ItemStack bannedItem) {
-        return bannedItems.get(permissionLevel).remove(ItemStackData.of(bannedItem));
+        return bannedItems.get(permissionLevel).remove(BanData.of(bannedItem));
     }
 
-    public Set<ItemStackData> getBannedItems(PermissionLevel permissionLevel) {
+    public Set<BanData> getBannedItems(PermissionLevel permissionLevel) {
         return Set.copyOf(bannedItems.get(permissionLevel));
     }
 
-    public Set<ItemStackData> getBannedItems(int permissionLevel) {
+    public Set<BanData> getBannedItems(int permissionLevel) {
         return getBannedItems(PermissionLevel.getFromInt(permissionLevel));
     }
 
-    public void setBannedItems(PermissionLevel permissionLevel, Set<ItemStackData> bannedItems) {
+    public void setBannedItems(PermissionLevel permissionLevel, Set<BanData> bannedItems) {
         this.bannedItems.put(permissionLevel, bannedItems);
     }
 

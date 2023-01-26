@@ -10,17 +10,17 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Objects;
 import java.util.Optional;
 
-public record ItemStackData(Item item, Optional<CompoundTag> tag) {
-    public static final Codec<ItemStackData> CODEC = Codec.pair(
+public record BanData(Item item, Optional<CompoundTag> tag) {
+    public static final Codec<BanData> CODEC = Codec.pair(
             BuiltInRegistries.ITEM.byNameCodec().fieldOf("item").codec(),
                     Codec.optionalField("tag", CompoundTag.CODEC).codec()
             ).xmap(
-                    pair -> new ItemStackData(pair.getFirst(), pair.getSecond()),
+                    pair -> new BanData(pair.getFirst(), pair.getSecond()),
                     data -> Pair.of(data.item, data.tag)
             );
 
-    public static ItemStackData of(ItemStack stack) {
-        return new ItemStackData(stack.getItem(), Optional.ofNullable(stack.hasTag() ? stack.getTag() : null));
+    public static BanData of(ItemStack stack) {
+        return new BanData(stack.getItem(), Optional.ofNullable(stack.hasTag() ? stack.getTag() : null));
     }
 
     public ItemStack asStack() {
@@ -32,7 +32,7 @@ public record ItemStackData(Item item, Optional<CompoundTag> tag) {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ItemStackData that)) return false;
+        if (!(o instanceof BanData that)) return false;
         return Objects.equals(item, that.item) && (tag.isEmpty() || Objects.equals(tag, that.tag));
     }
 
