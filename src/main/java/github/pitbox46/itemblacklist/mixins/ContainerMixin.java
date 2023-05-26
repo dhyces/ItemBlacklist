@@ -1,6 +1,7 @@
 package github.pitbox46.itemblacklist.mixins;
 
 import github.pitbox46.itemblacklist.ItemBlacklist;
+import github.pitbox46.itemblacklist.utils.Utils;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -29,10 +30,10 @@ public abstract class ContainerMixin {
     @Inject(at = @At(value = "HEAD"), method = "broadcastChanges")
     public void onDetectAndSendChanges(CallbackInfo ci) {
         AbstractContainerMenu thiz = ((AbstractContainerMenu)(Object)this);
-        Player nullableOwner = thiz instanceof InventoryMenu invMenu ? ((InventoryMenuAccessor)invMenu).getOwner() : null;
+        Player nullableOwner = thiz instanceof InventoryMenu invMenu ? ((InventoryMenuAccessor)invMenu).getOwner() : Utils.getPlayer(thiz);
         Deque<Component> bannedItems = new LinkedList<>();
-        for(int i = 0; i < this.slots.size(); ++i) {
-            if(ItemBlacklist.shouldDelete(nullableOwner, this.slots.get(i).getItem())) {
+        for (int i = 0; i < this.slots.size(); ++i) {
+            if (ItemBlacklist.shouldDelete(nullableOwner, this.slots.get(i).getItem())) {
                 if (nullableOwner != null) {
                     bannedItems.add(this.slots.get(i).getItem().getDisplayName());
                 }
@@ -54,13 +55,13 @@ public abstract class ContainerMixin {
     @Inject(at = @At(value = "HEAD"), method = "removed")
     public void onContainerClosed(Player playerIn, CallbackInfo ci) {
         if (!(playerIn instanceof ServerPlayer player)) return;
-        for(int i = 0; i < this.slots.size(); ++i) {
-            if(ItemBlacklist.shouldDelete(player, this.getItems().get(i))) {
+        for (int i = 0; i < this.slots.size(); ++i) {
+            if (ItemBlacklist.shouldDelete(player, this.getItems().get(i))) {
                 this.getItems().set(i, ItemStack.EMPTY);
             }
         }
-        for(int i = 0; i < playerIn.getInventory().getContainerSize(); ++i) {
-            if(ItemBlacklist.shouldDelete(player, playerIn.getInventory().getItem(i))) {
+        for (int i = 0; i < playerIn.getInventory().getContainerSize(); ++i) {
+            if (ItemBlacklist.shouldDelete(player, playerIn.getInventory().getItem(i))) {
                 playerIn.getInventory().setItem(i, ItemStack.EMPTY);
             }
         }
