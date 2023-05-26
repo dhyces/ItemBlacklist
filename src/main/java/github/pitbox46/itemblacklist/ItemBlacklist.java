@@ -29,10 +29,11 @@ import java.nio.file.Path;
 public class ItemBlacklist implements ModInitializer {
     public static final Logger LOGGER = LogManager.getLogger();
     public static Path banList;
+    public static MinecraftServer serverInstance;
 
     @Override
     public void onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTING.register(this::serverStarting);
+        ServerLifecycleEvents.SERVER_STARTED.register(this::serverStarted);
         ServerLifecycleEvents.SERVER_STOPPING.register(this::serverStopping);
         CommandRegistrationCallback.EVENT.register(this::registerCommands);
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(this::endDataPackReload);
@@ -43,15 +44,19 @@ public class ItemBlacklist implements ModInitializer {
         LOGGER.info("Config file reloaded");
     }
 
-    private void serverStopping(MinecraftServer server) {
-        FileUtils.saveToFile(banList);
-        LOGGER.info("Config saved to file");
-    }
-
-    private void serverStarting(MinecraftServer server) {
+    private void serverStarted(MinecraftServer server) {
         Path folder = server.getWorldPath(LevelResource.ROOT);
         banList = FileUtils.initialize(folder, "serverconfig", "itemblacklist.json");
         Config.instance = FileUtils.readConfigFromJson(banList);
+        serverInstance = server;
+    }
+
+    private void serverStopping(MinecraftServer server) {
+        FileUtils.saveToFile(banList);
+        LOGGER.info("Config saved to file");
+        banList = null;
+        Config.instance = null;
+        serverInstance = null;
     }
 
     private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext, Commands.CommandSelection environment) {
@@ -68,12 +73,13 @@ public class ItemBlacklist implements ModInitializer {
     public static boolean shouldDelete(@Nullable Player player, ItemStack stack) {
         if (stack.is(Items.AIR)) return false;
         boolean shouldBan = BanItemEvent.EVENT.invoker().onBannedItem(player, stack);
+        if (!shouldBan) return false;
         int permissionLevel = 0;
         if (player instanceof ServerPlayer serverPlayer) {
             permissionLevel = serverPlayer.server.getProfilePermissions(player.getGameProfile());
         } else if (player != null) {
             permissionLevel = ((EntityAccessor)player).invokeGetPermissionLevel();
         }
-        return shouldBan && Config.getInstance().getAllBannedItems(permissionLevel).contains(BanData.of(stack));
+        return Config.getInstance().getAllBannedItems(permissionLevel).contains(BanData.of(stack));
     }
 }
