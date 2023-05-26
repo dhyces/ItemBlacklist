@@ -10,6 +10,9 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Contains the item predicate for the banned item and the reason for the ban
+ */
 public record BanData(Item item, Optional<CompoundTag> tag) {
     public static final Codec<BanData> CODEC = Codec.pair(
             BuiltInRegistries.ITEM.byNameCodec().fieldOf("item").codec(),
