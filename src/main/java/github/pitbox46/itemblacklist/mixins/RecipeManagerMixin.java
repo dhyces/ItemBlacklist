@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin {
@@ -26,6 +27,6 @@ public class RecipeManagerMixin {
     private <C extends Container, T extends Recipe<C>> void onGetRecipes(RecipeType<T> pRecipeType, C pInventory, Level pLevel, CallbackInfoReturnable<List<T>> cir) {
         cir.setReturnValue(cir.getReturnValue().stream()
                 .filter(entry -> !ItemBlacklist.shouldDelete(null, entry.assemble(pInventory)))
-                .toList());
+                .collect(Collectors.toList()));
     }
 }

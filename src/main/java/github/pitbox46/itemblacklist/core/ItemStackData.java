@@ -10,9 +10,12 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Objects;
 import java.util.Optional;
 
-public record ItemStackData(Item item, Optional<CompoundTag> tag) {
-    public static final Codec<ItemStackData> CODEC = Codec.pair(
-            Registry.ITEM.byNameCodec().fieldOf("item").codec(),
+/**
+ * Contains the item predicate for the banned item and the reason for the ban
+ */
+public record BanData(Item item, Optional<CompoundTag> tag) {
+    public static final Codec<BanData> CODEC = Codec.pair(
+            BuiltInRegistries.ITEM.byNameCodec().fieldOf("item").codec(),
                     Codec.optionalField("tag", CompoundTag.CODEC).codec()
             ).xmap(
                     pair -> new ItemStackData(pair.getFirst(), pair.getSecond()),
