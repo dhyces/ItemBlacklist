@@ -6,7 +6,8 @@
   "refmap": "itemblacklist-refmap.json",
   "mixins": [
     "BlockEntityMixin",
-    "ContainerMixin",
+    "ContainerMenuMixin",
+    "CraftingContainerAccessor",
     "EntityAccessor",
     "InventoryMenuAccessor",
     "MerchantMenuMixin",
