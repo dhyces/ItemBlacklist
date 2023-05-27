@@ -2,7 +2,7 @@ package github.pitbox46.itemblacklist;
 
 import com.mojang.brigadier.CommandDispatcher;
 import github.pitbox46.itemblacklist.api.BanItemEvent;
-import github.pitbox46.itemblacklist.core.ItemStackData;
+import github.pitbox46.itemblacklist.core.BanData;
 import github.pitbox46.itemblacklist.core.ModCommands;
 import github.pitbox46.itemblacklist.mixins.EntityAccessor;
 import github.pitbox46.itemblacklist.utils.FileUtils;
