@@ -22,7 +22,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 @Mixin(AbstractContainerMenu.class)
-public abstract class ContainerMixin {
+public abstract class ContainerMenuMixin {
     @Shadow @Final public NonNullList<Slot> slots;
 
     @Shadow public abstract NonNullList<ItemStack> getItems();
