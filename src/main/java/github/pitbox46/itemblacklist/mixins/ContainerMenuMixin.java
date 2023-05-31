@@ -30,17 +30,18 @@ public abstract class ContainerMenuMixin {
     @Inject(at = @At(value = "HEAD"), method = "broadcastChanges")
     public void onDetectAndSendChanges(CallbackInfo ci) {
         AbstractContainerMenu thiz = ((AbstractContainerMenu)(Object)this);
-        Player nullableOwner = thiz instanceof InventoryMenu invMenu ? ((InventoryMenuAccessor)invMenu).getOwner() : Utils.getPlayer(thiz);
+        boolean isInventory = thiz instanceof InventoryMenu;
+        Player nullableOwner = isInventory ? ((InventoryMenuAccessor)thiz).getOwner() : Utils.getPlayer(thiz);
         Deque<Component> bannedItems = new LinkedList<>();
         for (int i = 0; i < this.slots.size(); ++i) {
             if (ItemBlacklist.shouldDelete(nullableOwner, this.slots.get(i).getItem())) {
-                if (nullableOwner != null) {
+                if (isInventory) {
                     bannedItems.add(this.slots.get(i).getItem().getDisplayName());
                 }
                 this.slots.get(i).set(ItemStack.EMPTY);
             }
         }
-        if (nullableOwner instanceof ServerPlayer && !bannedItems.isEmpty()) {
+        if (isInventory && nullableOwner instanceof ServerPlayer && !bannedItems.isEmpty()) {
             MutableComponent message = Component.literal("");
             boolean isSingleItem = bannedItems.size() == 1;
             message.append(bannedItems.pop());

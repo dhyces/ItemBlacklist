@@ -11,8 +11,8 @@
     "EntityAccessor",
     "InventoryMenuAccessor",
     "MerchantMenuMixin",
-    "RecipeManagerMixin",
-    "ServerPlayerAccessor"
+    "ServerPlayerAccessor",
+    "SlotMixin"
   ],
   "client": [
   ],

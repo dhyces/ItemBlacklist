@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import github.pitbox46.itemblacklist.Config;
 import github.pitbox46.itemblacklist.ItemBlacklist;
 import github.pitbox46.itemblacklist.core.BanData;
+import github.pitbox46.itemblacklist.mixins.CraftingContainerAccessor;
 import github.pitbox46.itemblacklist.mixins.ServerPlayerAccessor;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
@@ -16,8 +17,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.CraftingContainer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -50,6 +54,16 @@ public class Utils {
         Registry<ChatType> reg = registryOptional.get();
         ChatType.Bound bound = new ChatType.Bound(reg.get(ChatType.CHAT), Component.literal("SERVER"), null);
         server.getPlayerList().broadcastChatMessage(PlayerChatMessage.system(component.getString()), server.createCommandSourceStack(), bound);
+    }
+
+    @Nullable
+    public static Player getPlayer(Container container) {
+        if (container instanceof CraftingContainer craftingContainer) {
+            return getPlayer(((CraftingContainerAccessor)craftingContainer).getMenu());
+        } else if (container instanceof Inventory inventory) {
+            return inventory.player;
+        }
+        return null;
     }
 
     @Nullable
