@@ -70,14 +70,18 @@ public class ItemBlacklist implements ModInitializer {
         return true;
     }
 
-    public static boolean shouldDelete(@Nullable Player player, ItemStack stack) {
+    public static boolean shouldDelete(Player player, ItemStack stack) {
         if (stack.is(Items.AIR)) return false;
         boolean shouldBan = BanItemEvent.EVENT.invoker().onBannedItem(player, stack);
         if (!shouldBan) return false;
-        int permissionLevel = 0;
+        return hasPermission(player, stack);
+    }
+
+    public static boolean hasPermission(Player player, ItemStack stack) {
+        int permissionLevel;
         if (player instanceof ServerPlayer serverPlayer) {
             permissionLevel = serverPlayer.server.getProfilePermissions(player.getGameProfile());
-        } else if (player != null) {
+        } else {
             permissionLevel = ((EntityAccessor)player).invokeGetPermissionLevel();
         }
         return Config.getInstance().getAllBannedItems(permissionLevel).contains(BanData.of(stack));
