@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class ItemBlacklist implements ModInitializer {
@@ -37,6 +38,11 @@ public class ItemBlacklist implements ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPING.register(this::serverStopping);
         CommandRegistrationCallback.EVENT.register(this::registerCommands);
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(this::endDataPackReload);
+        try {
+            FileUtils.getOrCreateDefaultConfig();
+        } catch (IOException e) {
+            LOGGER.error("Could not create default config!");
+        }
     }
 
     private void endDataPackReload(MinecraftServer server, CloseableResourceManager resourceManager, boolean success) {
