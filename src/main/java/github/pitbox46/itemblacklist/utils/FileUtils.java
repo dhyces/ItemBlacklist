@@ -65,12 +65,8 @@ public class FileUtils {
             file = configFolder.resolve(fileName);
             if (!Files.exists(file)) {
                 Files.createFile(file);
-                Path defaultConfigPath = FabricLoader.getInstance().getConfigDir().resolve("itemblacklist.json");
-                if (Files.exists(defaultConfigPath)) {
-                    Files.copy(defaultConfigPath, file, StandardCopyOption.REPLACE_EXISTING);
-                } else {
-                    resetFileToDefault(file);
-                }
+                Path defaultConfigPath = getOrCreateDefaultConfig();
+                Files.copy(defaultConfigPath, file, StandardCopyOption.REPLACE_EXISTING);
             }
 //            RELOADER.start(); // TODO: If auto-config reload is enabled, uncomment this
             return file;
@@ -78,6 +74,15 @@ public class FileUtils {
             LOGGER.warn(e.getMessage());
         }
         return null;
+    }
+
+    public static Path getOrCreateDefaultConfig() throws IOException {
+        Path defaultConfigPath = FabricLoader.getInstance().getConfigDir().resolve("itemblacklist.json");
+        if (!Files.exists(defaultConfigPath)) {
+            Files.createFile(defaultConfigPath);
+            resetFileToDefault(defaultConfigPath);
+        }
+        return defaultConfigPath;
     }
 
     /**
