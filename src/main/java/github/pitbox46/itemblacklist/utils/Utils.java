@@ -35,7 +35,7 @@ import java.util.function.Function;
 
 public class Utils {
 
-    public static final Codec<BanData> EITHER_ITEM_CODEC = Codec.either(Registry.ITEM.byNameCodec(), BanData.CODEC).xmap(
+    public static final Codec<BanData> EITHER_ITEM_CODEC = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), BanData.CODEC).xmap(
             either -> either.map(item -> new BanData(item, Optional.empty()), Function.identity()),
             data -> data.tag().isEmpty() ? Either.left(data.item()) : Either.right(data)
     );
