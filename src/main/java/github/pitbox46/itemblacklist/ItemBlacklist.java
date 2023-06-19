@@ -77,9 +77,8 @@ public class ItemBlacklist implements ModInitializer {
 
     public static boolean shouldDelete(Player player, ItemStack stack) {
         if (stack.is(Items.AIR)) return false;
-        boolean shouldBan = BanItemEvent.EVENT.invoker().onBannedItem(player, stack);
-        if (!shouldBan) return false;
-        return !hasPermission(player, stack);
+        boolean shouldBan = !hasPermission(player, stack);
+        return BanItemEvent.EVENT.invoker().onBannedItem(player, stack, shouldBan);
     }
 
     public static boolean hasPermission(Player player, ItemStack stack) {
