@@ -1,6 +1,7 @@
 package github.pitbox46.itemblacklist.mixins;
 
 import github.pitbox46.itemblacklist.ItemBlacklist;
+import github.pitbox46.itemblacklist.core.BanData;
 import github.pitbox46.itemblacklist.utils.Utils;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.Set;
 
 @Mixin(AbstractContainerMenu.class)
 public abstract class ContainerMenuMixin {
@@ -34,9 +36,13 @@ public abstract class ContainerMenuMixin {
         Player nullableOwner = isInventory ? ((InventoryMenuAccessor)thiz).getOwner() : Utils.getPlayer(thiz);
         Deque<Component> bannedItems = new LinkedList<>();
         for (int i = 0; i < this.slots.size(); ++i) {
-            if (ItemBlacklist.shouldDelete(nullableOwner, this.slots.get(i).getItem())) {
+            if (!this.slots.get(i).hasItem()) {
+                continue;
+            }
+            Set<BanData> data = ItemBlacklist.getConfig().getBanData(nullableOwner, this.slots.get(i).getItem());
+            if (!data.isEmpty()) {
                 if (isInventory) {
-                    bannedItems.add(this.slots.get(i).getItem().getDisplayName());
+                    data.forEach(data1 -> bannedItems.add(data1.getComponent()));
                 }
                 this.slots.get(i).set(ItemStack.EMPTY);
             }

@@ -27,29 +27,29 @@ public class BanData implements Predicate<ItemStack> {
     );
 
     public static final Codec<BanData> EITHER_CODEC = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), BanData.CODEC).xmap(
-            either -> either.map(item -> new BanData(new ItemStack(item), NbtComparator.NONE, ""), Function.identity()),
-            data -> data.stack.getCount() == 1 && !data.stack.hasTag() && data.comparison == NbtComparator.NONE ? Either.left(data.stack.getItem()) : Either.right(data)
+            either -> either.map(item -> new BanData(new ItemWithTag(item, null), NbtComparator.NONE, ""), Function.identity()),
+            data -> data.stack.tag() == null && data.comparison == NbtComparator.NONE ? Either.left(data.stack.item()) : Either.right(data)
     );
 
-    private final ItemStack stack;
+    private final ItemWithTag stack;
     private final NbtComparator comparison;
     private final String reason;
 
-    private BanData(ItemStack stack, NbtComparator comparison, String banReason) {
+    private BanData(ItemWithTag stack, NbtComparator comparison, String banReason) {
         this.stack = stack;
         this.comparison = comparison;
         this.reason = banReason;
     }
 
     public static BanData of(ItemStack stack) {
-        return new BanData(stack.copy(), NbtComparator.NONE, "");
+        return new BanData(ItemWithTag.fromStack(stack.copy()), NbtComparator.NONE, "");
     }
 
     public static BanData of(ItemStack stack, NbtComparator comparison, String banReason) {
-        return new BanData(stack.copy(), comparison, banReason);
+        return new BanData(ItemWithTag.fromStack(stack.copy()), comparison, banReason);
     }
 
-    public ItemStack getStack() {
+    public ItemWithTag getStack() {
         return stack;
     }
 
@@ -62,9 +62,11 @@ public class BanData implements Predicate<ItemStack> {
     }
 
     public Component getComponent() {
-        return Component.empty()
-                .append(stack.getDisplayName())
-                .append(ModComponents.BAN_REASON.create(Component.literal(reason)));
+        MutableComponent component = Component.empty().append(stack.asStack().getDisplayName());
+        if (!reason.isEmpty()) {
+            component.append(" ").append(ModComponents.BAN_REASON.create(Component.literal(reason)));
+        }
+        return component;
     }
 
     @Override
@@ -82,6 +84,6 @@ public class BanData implements Predicate<ItemStack> {
 
     @Override
     public boolean test(ItemStack itemStack) {
-        return ItemStack.isSameItem(this.stack, itemStack) && comparison.compareTags(itemStack.getTag(), this.stack.getTag());
+        return itemStack.is(stack.item()) && comparison.compareTags(itemStack.getTag(), this.stack.tag());
     }
 }

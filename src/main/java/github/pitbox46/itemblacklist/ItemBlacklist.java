@@ -45,7 +45,7 @@ public class ItemBlacklist implements ModInitializer {
     }
 
     private void endDataPackReload(MinecraftServer server, CloseableResourceManager resourceManager, boolean success) {
-//        CONFIG.load(); //TODO: merge read list with current and save
+        config.reloadIfChanged();
         LOGGER.info("Config file reloaded");
     }
 
@@ -58,7 +58,7 @@ public class ItemBlacklist implements ModInitializer {
     }
 
     private void serverStopping(MinecraftServer server) {
-        config.save();
+        config.saveAndClose();
         LOGGER.info("Config saved to file");
         worldConfigPath = null;
         config = null;

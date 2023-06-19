@@ -1,7 +1,9 @@
 package github.pitbox46.itemblacklist.core;
 
 import com.google.common.base.Suppliers;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 
 import java.util.function.Supplier;
 
@@ -15,6 +17,7 @@ public class ModComponents {
     public static final ComponentHolder ITEM_UNBANNED = args -> Component.translatableWithFallback("itemblacklist.command.item_unbanned", "Item unbanned: %s", args[0]);
     public static final ComponentHolder ITEM_UNBANNED_FOR = args -> Component.translatableWithFallback("itemblacklist.command.item_unbanned_for_perm", "Item unbanned: %s for %s", args[0], args[1]);
     public static final ComponentHolder LIST_BANNED_ITEMS = ComponentHolder.constant(() -> Component.translatableWithFallback("itemblacklist.command.list_banned_items", "Items banned: "));
+    public static final ComponentHolder BAN_REASON = args -> Component.literal("[").append(Component.translatableWithFallback("itemblacklist.info.ban_reason", "Reason")).append(Component.literal("]")).withStyle(ChatFormatting.RED).withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, (Component) args[0])));
 
     public interface ComponentHolder {
         Component create(Object... args);

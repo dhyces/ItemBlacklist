@@ -45,6 +45,12 @@ public enum NbtComparator implements StringRepresentable {
     }
 
     public boolean compareTags(CompoundTag testStackTag, CompoundTag otherTag) {
+        if (testStackTag == otherTag) {
+            return true;
+        }
+        if (testStackTag == null || otherTag == null) {
+            return false;
+        }
         return tagComparison.applyAsBoolean(testStackTag, otherTag);
     }
 

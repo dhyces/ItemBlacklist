@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.MalformedJsonException;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
@@ -14,6 +15,7 @@ import github.pitbox46.itemblacklist.core.Config;
 import github.pitbox46.itemblacklist.ItemBlacklist;
 import github.pitbox46.itemblacklist.core.BuiltInPermissions;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.Util;
 import net.minecraft.world.item.ItemStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,40 +24,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.FileTime;
 
 public class FileUtils {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Logger LOGGER = LogManager.getLogger();
-
-    // TODO: Maybe!
-//    private static final Object BLOCK = new Object();
-//    private static FileTime lastTime;
-//    private static final Thread RELOADER = new Thread(() -> {
-//        while (true) {
-//            synchronized (BLOCK) {
-//                try {
-//                    if (Files.exists(ItemBlacklist.banList)) {
-//                        FileTime time = Files.getLastModifiedTime(ItemBlacklist.banList);
-//                        if (!time.equals(lastTime)) {
-//                            ItemBlacklist.requestConfigSet(readConfigFromJson(ItemBlacklist.banList));
-//                            lastTime = time;
-//                            ItemBlacklist.LOGGER.info("Config modified");
-//                        }
-//                    } else {
-//                        Files.createFile(ItemBlacklist.banList);
-//                        Config.getInstance().clearBannedItems();
-//                        resetFileToDefault(ItemBlacklist.banList);
-//                    }
-//                } catch (NoSuchFileException | AccessDeniedException | FileAlreadyExistsException ignored) { // Bah humbug, just ignore it
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//    }, "Config thread");
 
     public static Path initialize(Path worldFolder, String configFolderName, String fileName) {
         try {
@@ -73,7 +47,6 @@ public class FileUtils {
                     BasicDefaultConfig.createIfAbsent(file);
                 }
             }
-//            RELOADER.start(); // TODO: If auto-config reload is enabled, uncomment this
             return file;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -86,10 +59,10 @@ public class FileUtils {
     public static DataResult<BanList> readConfigFromJson(Path jsonFile) {
         JsonObject obj = null;
         try (BufferedReader reader = Files.newBufferedReader(jsonFile)) {
-            obj = GSON.fromJson(reader, JsonObject.class);
+            obj = GSON.getAdapter(JsonObject.class).fromJson(reader);
         } catch (MalformedJsonException e) {
             String pathString = jsonFile.toString();
-            ItemBlacklist.LOGGER.error("Failed to read config in " + jsonFile.subpath(pathString.indexOf("saves"), pathString.length()) + ": " + e.getMessage());
+            ItemBlacklist.LOGGER.error("Failed to read config in " + pathString.substring(pathString.indexOf("saves")) + ": " + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
         }

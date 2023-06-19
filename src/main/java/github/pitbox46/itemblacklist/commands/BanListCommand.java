@@ -78,10 +78,10 @@ public class BanListCommand {
     private static List<Component> gatherComponents(String permission) {
         if (BuiltInPermissions.isLevelPermission(permission)) {
             return ItemBlacklist.getConfig().getRecursiveBannedItems(permission).stream()
-                    .map(data -> data.getStack().getDisplayName())
+                    .map(data -> data.getStack().asStack().getDisplayName())
                     .toList();
         } else {
-            return ItemBlacklist.getConfig().getBanData(permission).stream().map(data -> data.getStack().getDisplayName()).toList();
+            return ItemBlacklist.getConfig().getBanData(permission).stream().map(data -> data.getStack().asStack().getDisplayName()).toList();
         }
     }
 }

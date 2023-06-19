@@ -7,6 +7,7 @@ import github.pitbox46.itemblacklist.core.Config;
 import github.pitbox46.itemblacklist.ItemBlacklist;
 import github.pitbox46.itemblacklist.client.utils.ClientUtils;
 import github.pitbox46.itemblacklist.core.BanData;
+import github.pitbox46.itemblacklist.core.ItemWithTag;
 import github.pitbox46.itemblacklist.mixins.TransientCraftingContainerAccessor;
 import github.pitbox46.itemblacklist.mixins.ServerPlayerAccessor;
 import net.minecraft.commands.CommandSourceStack;
@@ -15,6 +16,7 @@ import net.minecraft.nbt.*;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -32,9 +34,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class Utils {
-    public static final Codec<ItemStack> ITEM_OR_STACK = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), ItemStack.CODEC).xmap(
-            fsEither -> fsEither.map(ItemStack::new, Function.identity()),
-            stack -> stack.getCount() == 1 && !stack.hasTag() ? Either.left(stack.getItem()) : Either.right(stack)
+    public static final Codec<ItemWithTag> ITEM_OR_STACK = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), ItemWithTag.CODEC).xmap(
+            fsEither -> fsEither.map(item -> new ItemWithTag(item, null), Function.identity()),
+            stack -> stack.tag() == null ? Either.left(stack.item()) : Either.right(stack)
     );
 
     public static void broadcastMessage(MinecraftServer server, Component component) {
@@ -79,7 +81,7 @@ public class Utils {
                 return false;
             }
         } else if (tag instanceof StringTag) {
-            if (!tag.equals(tag2)) {
+            if (!tag.equals(tag2) && !testResourceLocations((StringTag) tag, (StringTag) tag2)) {
                 return false;
             }
         } else if (tag instanceof CompoundTag compoundTag) {
@@ -96,5 +98,12 @@ public class Utils {
             }
         }
         return true;
+    }
+
+    private static boolean testResourceLocations(StringTag tag, StringTag tag2) {
+        if (ResourceLocation.isValidResourceLocation(tag.getAsString()) && ResourceLocation.isValidResourceLocation(tag2.getAsString())) {
+            return new ResourceLocation(tag.getAsString()).equals(new ResourceLocation(tag2.getAsString()));
+        }
+        return false;
     }
 }
