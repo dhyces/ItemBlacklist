@@ -44,8 +44,15 @@ public class BanListCommand {
         CommandSourceStack commandSource = context.getSource();
 
         commandSource.sendSystemMessage(ModComponents.LIST_BANNED_ITEMS.create());
+        commandSource.sendSystemMessage(createBannedItemsComponent(BuiltInPermissions.LEVEL_0));
+        commandSource.sendSystemMessage(createBannedItemsComponent(BuiltInPermissions.LEVEL_1));
+        commandSource.sendSystemMessage(createBannedItemsComponent(BuiltInPermissions.LEVEL_2));
+        commandSource.sendSystemMessage(createBannedItemsComponent(BuiltInPermissions.LEVEL_3));
+        commandSource.sendSystemMessage(createBannedItemsComponent(BuiltInPermissions.LEVEL_4));
         ItemBlacklist.getConfig().getAllPermissions().stream().sorted().forEach(s -> {
-            commandSource.sendSystemMessage(createBannedItemsComponent(s));
+            if (!BuiltInPermissions.isLevelPermission(s)) {
+                commandSource.sendSystemMessage(createBannedItemsComponent(s));
+            }
         });
 
         return SINGLE_SUCCESS;
