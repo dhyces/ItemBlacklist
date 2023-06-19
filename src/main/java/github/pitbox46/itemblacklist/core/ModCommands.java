@@ -21,4 +21,9 @@ public class ModCommands {
 
         dispatcher.register(Commands.literal("ib").redirect(cmdTut));
     }
+
+    public static final String ITEM_ARG = "item";
+    public static final String PERMISSION_ARG = "permission";
+    public static final String REASON_ARG = "reason";
+    public static final String NBT_COMPARE_ARG = "nbt_compare";
 }

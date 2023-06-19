@@ -2,13 +2,15 @@ package github.pitbox46.itemblacklist.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import github.pitbox46.itemblacklist.Config;
 import github.pitbox46.itemblacklist.ItemBlacklist;
-import github.pitbox46.itemblacklist.core.PermissionLevel;
+import github.pitbox46.itemblacklist.core.BuiltInPermissions;
+import github.pitbox46.itemblacklist.core.ModComponents;
 import github.pitbox46.itemblacklist.utils.FileUtils;
+import github.pitbox46.itemblacklist.utils.PermissionHelper;
 import github.pitbox46.itemblacklist.utils.Utils;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandRuntimeException;
@@ -20,28 +22,29 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
+import static github.pitbox46.itemblacklist.core.ModCommands.*;
 
 public class UnbanItemCommand {
     public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
         return Commands
                 .literal("unban")
                 .requires(cs -> cs.hasPermission(2))
-                .then(Commands.argument("item", ItemArgument.item(context))
-                        .executes(UnbanItemCommand::unbanItem).then(Commands.argument("permission_level", IntegerArgumentType.integer(0, 4))
+                .then(Commands.argument(ITEM_ARG, ItemArgument.item(context))
+                        .executes(UnbanItemCommand::unbanItem).then(Commands.argument(PERMISSION_ARG, IntegerArgumentType.integer(0, 4))
                                         .executes(UnbanItemCommand::unbanItemWithPermission)
                         )
                 ).then(Commands.literal("all")
-                        .executes(UnbanItemCommand::unbanAll).then(Commands.argument("permission_level", IntegerArgumentType.integer(0, 4))
+                        .executes(UnbanItemCommand::unbanAll).then(Commands.argument(PERMISSION_ARG, IntegerArgumentType.integer(0, 4))
                                 .executes(UnbanItemCommand::unbanAllWithPermission)
                         ));
     }
 
     private static int unbanItemWithPermission(CommandContext<CommandSourceStack> context) {
         try {
-            ItemStack stack = ItemArgument.getItem(context, "item").createItemStack(1, false);
-            int toLevel = IntegerArgumentType.getInteger(context, "permission_level");
+            ItemStack stack = ItemArgument.getItem(context, ITEM_ARG).createItemStack(1, false);
+            String permission = StringArgumentType.getString(context, PERMISSION_ARG);
 
-            removeItemWithPermission(context.getSource(), PermissionLevel.getFromInt(toLevel), stack);
+            removeItemWithPermission(context.getSource(), permission, stack);
         } catch(IndexOutOfBoundsException | CommandSyntaxException e) {
             context.getSource().sendFailure(Component.literal("The item could not be unbanned."));
         }
@@ -50,7 +53,7 @@ public class UnbanItemCommand {
 
     private static int unbanItem(CommandContext<CommandSourceStack> context) {
         try {
-            ItemInput input = ItemArgument.getItem(context, "item");
+            ItemInput input = ItemArgument.getItem(context, ITEM_ARG);
             removeItem(context.getSource(), input.createItemStack(1, false));
         } catch(IndexOutOfBoundsException | CommandSyntaxException e) {
             context.getSource().sendFailure(Component.literal("The item could not be unbanned."));
@@ -59,50 +62,39 @@ public class UnbanItemCommand {
     }
 
     private static int unbanAll(CommandContext<CommandSourceStack> context) {
-        PermissionLevel permsNeeded = getHighestPermsNeeded();
-        checkPermission(context.getSource(), permsNeeded);
+        checkPermission(context.getSource(), BuiltInPermissions.LEVEL_4);
 
-        FileUtils.removeAllItemsAndSave(ItemBlacklist.banList);
-        Utils.broadcastMessage(context.getSource().getServer(), Component.literal("All items unbanned"));
+        ItemBlacklist.getConfig().unbanAllItems();
+        Utils.broadcastMessage(context.getSource().getServer(), ModComponents.ALL_ITEMS_UNBANNED.create());
         return SINGLE_SUCCESS;
     }
 
     private static int unbanAllWithPermission(CommandContext<CommandSourceStack> context) {
-        int intLevel = IntegerArgumentType.getInteger(context, "permission_level");
-        PermissionLevel permissionLevel = PermissionLevel.getFromInt(intLevel);
-        checkPermission(context.getSource(), permissionLevel);
+        String permission = StringArgumentType.getString(context, PERMISSION_ARG);
+        checkPermission(context.getSource(), permission);
 
-        FileUtils.removeAllItemsFromPermissionAndSave(ItemBlacklist.banList, permissionLevel);
-        Utils.broadcastMessage(context.getSource().getServer(), Component.literal("All items unbanned for " + permissionLevel.getUserFriendlyName()));
+        ItemBlacklist.getConfig().unbanAllItems(permission);
+        Utils.broadcastMessage(context.getSource().getServer(), ModComponents.ALL_ITEMS_UNBANNED_FOR.create(permission));
         return SINGLE_SUCCESS;
     }
 
-    private static void removeItemWithPermission(CommandSourceStack commandSource, PermissionLevel permissionLevel, ItemStack itemStack) {
-        checkPermission(commandSource, permissionLevel);
-
-        FileUtils.removeDownToAndSave(ItemBlacklist.banList, permissionLevel, itemStack);
-        Utils.broadcastMessage(commandSource.getServer(), Component.literal("Item unbanned: ").append(itemStack.getDisplayName()).append(" for " + permissionLevel.getUserFriendlyName()));
-    }
-
     private static void removeItem(CommandSourceStack commandSource, ItemStack itemStack) {
-        checkPermission(commandSource, getHighestPermsNeeded());
+        checkPermission(commandSource, BuiltInPermissions.LEVEL_4);
 
-        FileUtils.removeItemAndSave(ItemBlacklist.banList, itemStack);
-        Utils.broadcastMessage(commandSource.getServer(), Component.literal("Item unbanned: ").append(itemStack.getDisplayName()));
+        ItemBlacklist.getConfig().unbanItem(itemStack);
+        Utils.broadcastMessage(commandSource.getServer(), ModComponents.ITEM_UNBANNED.create(itemStack.getDisplayName()));
     }
 
-    private static PermissionLevel getHighestPermsNeeded() {
-        for (PermissionLevel i = PermissionLevel.LEVEL_4; !i.equals(PermissionLevel.LEVEL_0); i = i.lower()) {
-            if (!Config.getInstance().getBannedItems(i).isEmpty()) {
-                return i;
-            }
-        }
-        return PermissionLevel.LEVEL_0;
+    private static void removeItemWithPermission(CommandSourceStack commandSource, String permission, ItemStack itemStack) {
+        checkPermission(commandSource, permission);
+
+        ItemBlacklist.getConfig().unbanItem(permission, itemStack);
+        Utils.broadcastMessage(commandSource.getServer(), ModComponents.ITEM_UNBANNED_FOR.create(itemStack.getDisplayName(), permission));
     }
 
-    private static void checkPermission(CommandSourceStack commandSource, PermissionLevel permissionLevel) {
-        if (!commandSource.hasPermission(permissionLevel.ordinal())) {
-            throw new CommandRuntimeException(Component.literal("You do not have sufficient permissions. Required: " + permissionLevel.getUserFriendlyName()));
+    private static void checkPermission(CommandSourceStack commandSource, String permission) {
+        if (!PermissionHelper.hasPermission(commandSource, permission)) {
+            throw new CommandRuntimeException(ModComponents.INADEQUATE_PERMS.create(permission));
         }
     }
 }
