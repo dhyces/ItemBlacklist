@@ -12,7 +12,7 @@ import java.util.function.Function;
 public class BanList {
     public static final Codec<BanList> CODEC = Codec.unboundedMap(
                     Codec.STRING,
-                    new SetCodec<>(BanData.EITHER_CODEC).xmap(banData -> (Set<BanData>)new HashSet<>(banData), Function.identity())
+                    new SetCodec<>(BanData.EITHER_CODEC).xmap(banData -> (Set<BanData>)new LinkedHashSet<>(banData), Function.identity())
             )
             .xmap(BanList::new, banList -> banList.bannedItems);
 
@@ -32,7 +32,13 @@ public class BanList {
     }
 
     public void addBans(String permission, Set<BanData> data) {
-        bannedItems.put(permission, data);
+        bannedItems.compute(permission, (s, banData) -> {
+            if (banData == null) {
+                return data;
+            }
+            banData.addAll(data);
+            return banData;
+        });
     }
 
     public boolean removeBan(String permission, ItemStack bannedItem) {
