@@ -1,14 +1,5 @@
-buildscript {
-    repositories {
-        maven {
-            name = 'ParchmentMC'
-            url = 'https://maven.parchmentmc.org'
-        }
-    }
-}
-
 plugins {
-    id 'fabric-loom' version '1.2-SNAPSHOT'
+    id 'fabric-loom' version '1.2.+'
     id 'java'
     id 'idea'
 }
@@ -17,6 +8,8 @@ sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
 repositories {
+    mavenLocal()
+
     maven {
         name = 'ParchmentMC'
         url = 'https://maven.parchmentmc.org'
@@ -31,6 +24,8 @@ dependencies {
     }
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    modImplementation("me.lucko:fabric-permissions-api:0.3-SNAPSHOT")
 
     implementation "com.google.code.findbugs:jsr305:3.0.2"
 }

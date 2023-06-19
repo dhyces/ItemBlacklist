@@ -7,12 +7,13 @@
   "mixins": [
     "BlockEntityMixin",
     "ContainerMenuMixin",
-    "CraftingContainerAccessor",
     "EntityAccessor",
     "InventoryMenuAccessor",
     "MerchantMenuMixin",
+    "MinecraftServerMixin",
     "ServerPlayerAccessor",
-    "SlotMixin"
+    "SlotMixin",
+    "TransientCraftingContainerAccessor"
   ],
   "client": [
   ],
