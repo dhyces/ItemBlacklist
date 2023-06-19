@@ -3,15 +3,15 @@ package github.pitbox46.itemblacklist.utils;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import github.pitbox46.itemblacklist.Config;
+import github.pitbox46.itemblacklist.core.Config;
 import github.pitbox46.itemblacklist.ItemBlacklist;
+import github.pitbox46.itemblacklist.client.utils.ClientUtils;
 import github.pitbox46.itemblacklist.core.BanData;
-import github.pitbox46.itemblacklist.mixins.CraftingContainerAccessor;
+import github.pitbox46.itemblacklist.mixins.TransientCraftingContainerAccessor;
 import github.pitbox46.itemblacklist.mixins.ServerPlayerAccessor;
-import net.minecraft.Util;
-import net.minecraft.core.Registry;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.*;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
@@ -22,6 +22,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -31,35 +32,21 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class Utils {
-
-    public static final Codec<BanData> EITHER_ITEM_CODEC = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), BanData.CODEC).xmap(
-            either -> either.left().isEmpty() ? either.right().get() : new BanData(either.left().get(), Optional.empty()),
-            data -> data.tag().isEmpty() ? Either.left(data.item()) : Either.right(data)
+    public static final Codec<ItemStack> ITEM_OR_STACK = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), ItemStack.CODEC).xmap(
+            fsEither -> fsEither.map(ItemStack::new, Function.identity()),
+            stack -> stack.getCount() == 1 && !stack.hasTag() ? Either.left(stack.getItem()) : Either.right(stack)
     );
 
-    public static RecordCodecBuilder<Config, Set<BanData>> optionalConfigSet(String field, Function<Config, Set<BanData>> configFunction) {
-        return Codec.optionalField(field, Utils.EITHER_ITEM_CODEC.listOf()).orElse(Optional.of(List.of()))
-                .xmap(
-                        optional -> optional.isEmpty() ? new HashSet<BanData>() : (Set<BanData>)Util.make(new HashSet<BanData>(), objects -> objects.addAll(optional.get())),
-                        itemStacks -> Optional.of(itemStacks == null ? List.of() : List.copyOf(itemStacks))
-                )
-                .forGetter(configFunction);
-    }
-
     public static void broadcastMessage(MinecraftServer server, Component component) {
-        Optional<Registry<ChatType>> registryOptional = server.overworld().registryAccess().registry(Registries.CHAT_TYPE);
-        if (registryOptional.isEmpty()) {
-            throw new IllegalStateException("Dynamic registry of type {ChatType} was not found");
-        }
-        Registry<ChatType> reg = registryOptional.get();
-        ChatType.Bound bound = new ChatType.Bound(reg.get(ChatType.CHAT), Component.literal("SERVER"), null);
-        server.getPlayerList().broadcastChatMessage(PlayerChatMessage.system(component.getString()), server.createCommandSourceStack(), bound);
+        CommandSourceStack sourceStack = server.createCommandSourceStack();
+        ChatType.Bound bound = ChatType.bind(ChatType.CHAT, sourceStack);
+        server.getPlayerList().broadcastChatMessage(PlayerChatMessage.system(component.getString()), sourceStack, bound);
     }
 
     @Nullable
     public static Player getPlayer(Container container) {
         if (container instanceof CraftingContainer craftingContainer) {
-            return getPlayer(((CraftingContainerAccessor)craftingContainer).getMenu());
+            return getPlayer(((TransientCraftingContainerAccessor)craftingContainer).getMenu());
         } else if (container instanceof Inventory inventory) {
             return inventory.player;
         }
@@ -68,11 +55,46 @@ public class Utils {
 
     @Nullable
     public static Player getPlayer(AbstractContainerMenu menu) {
-        for (ServerPlayer player : ItemBlacklist.serverInstance.getPlayerList().getPlayers()) {
-            if (((ServerPlayerAccessor)player).getContainerCounter() == menu.containerId) {
-                return player;
+        if (ItemBlacklist.serverInstance != null) {
+            for (ServerPlayer player : ItemBlacklist.serverInstance.getPlayerList().getPlayers()) {
+                if (((ServerPlayerAccessor)player).getContainerCounter() == menu.containerId) {
+                    return player;
+                }
             }
         }
-        return null;
+        return ClientUtils.getClientPlayer();
+    }
+
+    public static boolean areTagsSimilar(Tag tag, Tag tag2) {
+        if (tag instanceof ShortTag || tag instanceof ByteTag || tag instanceof IntTag) {
+            if (((NumericTag)tag).getAsInt() != ((NumericTag)tag2).getAsInt()) {
+                return false;
+            }
+        } else if (tag instanceof FloatTag || tag instanceof DoubleTag) {
+            if (((NumericTag)tag).getAsDouble() != ((NumericTag)tag2).getAsDouble()) {
+                return false;
+            }
+        } else if (tag instanceof LongTag) {
+            if (((NumericTag)tag).getAsLong() != ((NumericTag)tag2).getAsLong()) {
+                return false;
+            }
+        } else if (tag instanceof StringTag) {
+            if (!tag.equals(tag2)) {
+                return false;
+            }
+        } else if (tag instanceof CompoundTag compoundTag) {
+            for (String key : compoundTag.getAllKeys()) {
+                if (!areTagsSimilar(compoundTag.get(key), ((CompoundTag)tag2).get(key))) {
+                    return false;
+                }
+            }
+        } else if (tag instanceof CollectionTag<?> collectionTag) {
+            for (int i = 0; i < collectionTag.size(); i++) {
+                if (!areTagsSimilar(collectionTag.get(i), ((CollectionTag<?>)tag2).get(i))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
