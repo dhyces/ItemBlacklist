@@ -5,6 +5,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import github.pitbox46.itemblacklist.utils.Utils;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Objects;
@@ -56,6 +59,12 @@ public class BanData implements Predicate<ItemStack> {
 
     public String getReason() {
         return reason;
+    }
+
+    public Component getComponent() {
+        return Component.empty()
+                .append(stack.getDisplayName())
+                .append(ModComponents.BAN_REASON.create(Component.literal(reason)));
     }
 
     @Override
