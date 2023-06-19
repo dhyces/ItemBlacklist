@@ -3,12 +3,15 @@ package github.pitbox46.itemblacklist;
 import com.mojang.brigadier.CommandDispatcher;
 import github.pitbox46.itemblacklist.api.BanItemEvent;
 import github.pitbox46.itemblacklist.core.BanData;
+import github.pitbox46.itemblacklist.core.BasicDefaultConfig;
+import github.pitbox46.itemblacklist.core.Config;
 import github.pitbox46.itemblacklist.core.ModCommands;
 import github.pitbox46.itemblacklist.mixins.EntityAccessor;
 import github.pitbox46.itemblacklist.utils.FileUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -23,13 +26,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.nio.file.Path;
 
 public class ItemBlacklist implements ModInitializer {
     public static final Logger LOGGER = LogManager.getLogger();
-    public static Path banList;
+    private static Config config;
     public static MinecraftServer serverInstance;
+    public static final Path DEFAULT_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("itemblacklist.json");
+    private static Path worldConfigPath;
 
     @Override
     public void onInitialize() {
@@ -37,25 +41,27 @@ public class ItemBlacklist implements ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPING.register(this::serverStopping);
         CommandRegistrationCallback.EVENT.register(this::registerCommands);
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(this::endDataPackReload);
+        BasicDefaultConfig.createIfAbsent(DEFAULT_CONFIG_PATH);
     }
 
     private void endDataPackReload(MinecraftServer server, CloseableResourceManager resourceManager, boolean success) {
-        Config.instance = FileUtils.readConfigFromJson(banList);
+//        CONFIG.load(); //TODO: merge read list with current and save
         LOGGER.info("Config file reloaded");
     }
 
     private void serverStarted(MinecraftServer server) {
-        Path folder = server.getWorldPath(LevelResource.ROOT);
-        banList = FileUtils.initialize(folder, "serverconfig", "itemblacklist.json");
-        Config.instance = FileUtils.readConfigFromJson(banList);
+        Path worldConfigFolder = server.getWorldPath(LevelResource.ROOT);
+        worldConfigPath = FileUtils.initialize(worldConfigFolder, "serverconfig", "itemblacklist.json");
+        config = new Config(worldConfigPath);
+        config.load();
         serverInstance = server;
     }
 
     private void serverStopping(MinecraftServer server) {
-        FileUtils.saveToFile(banList);
+        config.save();
         LOGGER.info("Config saved to file");
-        banList = null;
-        Config.instance = null;
+        worldConfigPath = null;
+        config = null;
         serverInstance = null;
     }
 
@@ -65,25 +71,18 @@ public class ItemBlacklist implements ModInitializer {
 //        }
     }
 
-    public static boolean requestConfigSet(@Nonnull Config newConfig) {
-        Config.instance = newConfig;
-        return true;
+    public static Config getConfig() {
+        return config;
     }
 
     public static boolean shouldDelete(Player player, ItemStack stack) {
         if (stack.is(Items.AIR)) return false;
         boolean shouldBan = BanItemEvent.EVENT.invoker().onBannedItem(player, stack);
         if (!shouldBan) return false;
-        return hasPermission(player, stack);
+        return !hasPermission(player, stack);
     }
 
     public static boolean hasPermission(Player player, ItemStack stack) {
-        int permissionLevel;
-        if (player instanceof ServerPlayer serverPlayer) {
-            permissionLevel = serverPlayer.server.getProfilePermissions(player.getGameProfile());
-        } else {
-            permissionLevel = ((EntityAccessor)player).invokeGetPermissionLevel();
-        }
-        return Config.getInstance().getAllBannedItems(permissionLevel).contains(BanData.of(stack));
+        return getConfig().hasPermission(player, stack);
     }
 }

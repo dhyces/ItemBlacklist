@@ -6,10 +6,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.MalformedJsonException;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
-import github.pitbox46.itemblacklist.Config;
+import github.pitbox46.itemblacklist.core.BanList;
+import github.pitbox46.itemblacklist.core.BasicDefaultConfig;
+import github.pitbox46.itemblacklist.core.Config;
 import github.pitbox46.itemblacklist.ItemBlacklist;
-import github.pitbox46.itemblacklist.core.PermissionLevel;
+import github.pitbox46.itemblacklist.core.BuiltInPermissions;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.item.ItemStack;
 import org.apache.logging.log4j.LogManager;
@@ -22,10 +25,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.HashSet;
 
 public class FileUtils {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Logger LOGGER = LogManager.getLogger();
 
     // TODO: Maybe!
@@ -65,30 +67,26 @@ public class FileUtils {
             file = configFolder.resolve(fileName);
             if (!Files.exists(file)) {
                 Files.createFile(file);
-                Path defaultConfigPath = FabricLoader.getInstance().getConfigDir().resolve("itemblacklist.json");
-                if (Files.exists(defaultConfigPath)) {
-                    Files.copy(defaultConfigPath, file, StandardCopyOption.REPLACE_EXISTING);
+                if (Files.exists(ItemBlacklist.DEFAULT_CONFIG_PATH)) {
+                    Files.copy(ItemBlacklist.DEFAULT_CONFIG_PATH, file, StandardCopyOption.REPLACE_EXISTING);
                 } else {
-                    resetFileToDefault(file);
+                    BasicDefaultConfig.createIfAbsent(file);
                 }
             }
 //            RELOADER.start(); // TODO: If auto-config reload is enabled, uncomment this
             return file;
-        } catch(IOException e) {
-            LOGGER.warn(e.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**
      * Reads items from a Json that has a top level array
      */
-    public static Config readConfigFromJson(Path jsonFile) {
+    public static DataResult<BanList> readConfigFromJson(Path jsonFile) {
         JsonObject obj = null;
-        try {
-            BufferedReader reader = Files.newBufferedReader(jsonFile);
+        try (BufferedReader reader = Files.newBufferedReader(jsonFile)) {
             obj = GSON.fromJson(reader, JsonObject.class);
-            reader.close();
         } catch (MalformedJsonException e) {
             String pathString = jsonFile.toString();
             ItemBlacklist.LOGGER.error("Failed to read config in " + jsonFile.subpath(pathString.indexOf("saves"), pathString.length()) + ": " + e.getMessage());
@@ -100,81 +98,14 @@ public class FileUtils {
             obj = new JsonObject();
         }
 
-        DataResult<Config> result = Config.CODEC.parse(JsonOps.INSTANCE, obj);
-        if (result.result().isEmpty()) {
-            resetFileToDefault(jsonFile);
-            return Config.getInstance();
-        }
+        Dynamic<JsonElement> dynamic = ConfigDataFixer.fixBanList(new Dynamic<>(JsonOps.INSTANCE, obj));
 
-        return result.getOrThrow(false, ItemBlacklist.LOGGER::error);
+        return Config.BAN_LIST_CODEC.parse(dynamic);
     }
 
-    public static void appendItemAndSave(Path jsonFile, PermissionLevel permissionLevel, ItemStack item) {
-        ItemBlacklist.requestConfigSet(readConfigFromJson(jsonFile));
-        Config.getInstance().addItem(permissionLevel, item);
-        saveToFile(jsonFile);
-    }
-
-    public static void removeItemAndSave(Path jsonFile, PermissionLevel permissionLevel, ItemStack item) {
-        ItemBlacklist.requestConfigSet(readConfigFromJson(jsonFile));
-        Config.getInstance().removeItem(permissionLevel, item);
-        saveToFile(jsonFile);
-    }
-
-    public static void removeItemAndSave(Path jsonFile, ItemStack item) {
-        ItemBlacklist.requestConfigSet(readConfigFromJson(jsonFile));
-        for (PermissionLevel permissionLevel : PermissionLevel.values()) {
-            Config.getInstance().removeItem(permissionLevel, item);
-        }
-        saveToFile(jsonFile);
-    }
-
-    /**
-     *
-     * @param jsonFile The path to the config file
-     * @param targetLevel The targeted permission level. ie, I want to remove an item so that LEVEL_2 users can have it, you would use LEVEL_2
-     * @param item The itemstack to remove
-     */
-    public static void removeDownToAndSave(Path jsonFile, PermissionLevel targetLevel, ItemStack item) {
-        targetLevel = targetLevel.lower();
-        ItemBlacklist.requestConfigSet(readConfigFromJson(jsonFile));
-        for (PermissionLevel i = PermissionLevel.LEVEL_4; !i.equals(targetLevel); i = i.lower()) {
-            Config.getInstance().removeItem(i, item);
-        }
-        Config.getInstance().addItem(targetLevel, item);
-        saveToFile(jsonFile);
-    }
-
-    public static void removeAllItemsAndSave(Path jsonFile) {
-        Config.getInstance().clearBannedItems();
-        saveToFile(jsonFile);
-    }
-
-    public static void removeAllItemsFromPermissionAndSave(Path jsonFile, PermissionLevel permissionLevel) {
-        ItemBlacklist.requestConfigSet(readConfigFromJson(jsonFile));
-        Config.getInstance().setBannedItems(permissionLevel, new HashSet<>());
-        saveToFile(jsonFile);
-    }
-
-    private static void resetFileToDefault(Path jsonFile) {
-        ItemBlacklist.LOGGER.error("Could not parse config. Resetting to default state.");
-        DataResult<JsonElement> result = Config.CODEC.encodeStart(JsonOps.INSTANCE, Config.getInstance());
-        String emptyConfig = GSON.toJson(result.getOrThrow(false, ItemBlacklist.LOGGER::error));
-        try {
-            BufferedWriter writer = Files.newBufferedWriter(jsonFile, StandardCharsets.UTF_8);
-            writer.write(emptyConfig);
-            writer.close();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public static void saveToFile(Path jsonFile) {
-        DataResult<JsonElement> result = Config.CODEC.encodeStart(JsonOps.INSTANCE, Config.getInstance());
-        try {
-            BufferedWriter writer = Files.newBufferedWriter(jsonFile, StandardCharsets.UTF_8);
+    public static void saveToFile(Path jsonFile, DataResult<JsonElement> result) {
+        try (BufferedWriter writer = Files.newBufferedWriter(jsonFile, StandardCharsets.UTF_8)) {
             writer.write(GSON.toJson(result.getOrThrow(false, ItemBlacklist.LOGGER::error)));
-            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
