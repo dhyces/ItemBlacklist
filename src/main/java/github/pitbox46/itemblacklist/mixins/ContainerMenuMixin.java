@@ -32,12 +32,12 @@ public abstract class ContainerMenuMixin {
         AbstractContainerMenu thiz = ((AbstractContainerMenu)(Object)this);
         Player nullableOwner = thiz instanceof InventoryMenu invMenu ? ((InventoryMenuAccessor)invMenu).getOwner() : Utils.getPlayer(thiz);
         Deque<Component> bannedItems = new LinkedList<>();
-        for (int i = 0; i < this.slots.size(); ++i) {
-            if (ItemBlacklist.shouldDelete(nullableOwner, this.slots.get(i).getItem())) {
+        for (Slot slot : this.slots) {
+            if (ItemBlacklist.shouldDelete(nullableOwner, slot.getItem())) {
                 if (nullableOwner != null) {
-                    bannedItems.add(this.slots.get(i).getItem().getDisplayName());
+                    bannedItems.add(slot.getItem().getDisplayName());
                 }
-                this.slots.get(i).set(ItemStack.EMPTY);
+                slot.set(ItemStack.EMPTY);
             }
         }
         if (nullableOwner instanceof ServerPlayer && !bannedItems.isEmpty()) {

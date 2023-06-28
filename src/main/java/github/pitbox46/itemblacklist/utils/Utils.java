@@ -52,6 +52,6 @@ public class Utils {
                 }
             }
         }
-        return ClientSidedUtils.getClientPlayer();
+        return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT ? ClientSidedUtils.getClientPlayer() : null;
     }
 }
