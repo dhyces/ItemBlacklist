@@ -2,9 +2,11 @@ package github.pitbox46.itemblacklist.mixins;
 
 import github.pitbox46.itemblacklist.ItemBlacklist;
 import github.pitbox46.itemblacklist.core.BanData;
+import github.pitbox46.itemblacklist.core.ModComponents;
 import github.pitbox46.itemblacklist.utils.Utils;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -35,42 +37,45 @@ public abstract class ContainerMenuMixin {
         boolean isInventory = thiz instanceof InventoryMenu;
         Player nullableOwner = isInventory ? ((InventoryMenuAccessor)thiz).getOwner() : Utils.getPlayer(thiz);
         Deque<Component> bannedItems = new LinkedList<>();
-        for (int i = 0; i < this.slots.size(); ++i) {
-            if (!this.slots.get(i).hasItem()) {
+        for (Slot slot : slots) {
+            if (!slot.hasItem()) {
                 continue;
             }
-            Set<BanData> data = ItemBlacklist.getConfig().getBanData(nullableOwner, this.slots.get(i).getItem());
+            Set<BanData> data = ItemBlacklist.getConfig().getBanData(nullableOwner, slot.getItem());
             if (!data.isEmpty()) {
                 if (isInventory) {
                     data.forEach(data1 -> bannedItems.add(data1.getComponent()));
                 }
-                this.slots.get(i).set(ItemStack.EMPTY);
+                slot.set(ItemStack.EMPTY);
             }
         }
         if (isInventory && nullableOwner instanceof ServerPlayer && !bannedItems.isEmpty()) {
-            MutableComponent message = Component.literal("");
-            boolean isSingleItem = bannedItems.size() == 1;
-            message.append(bannedItems.pop());
-            for (Component item : bannedItems) {
-                message.append(", ");
-                message.append(item);
-            }
-            nullableOwner.displayClientMessage(message.append((isSingleItem ? " is" : " are") + " banned and has been removed from your inventory"), false);
+            Component message = ComponentUtils.formatList(bannedItems, Component.literal(", "));
+            nullableOwner.displayClientMessage(ModComponents.ITEMS_REMOVED.create(message), false);
         }
     }
 
     @Inject(at = @At(value = "HEAD"), method = "removed")
     public void onContainerClosed(Player playerIn, CallbackInfo ci) {
         if (!(playerIn instanceof ServerPlayer player)) return;
-        for (int i = 0; i < this.slots.size(); ++i) {
-            if (ItemBlacklist.shouldDelete(player, this.getItems().get(i))) {
+        Deque<Component> bannedItems = new LinkedList<>();
+        for (int i = 0; i < this.getItems().size(); ++i) {
+            ItemStack stack = this.getItems().get(i);
+            if (ItemBlacklist.shouldDelete(player, stack)) {
+                bannedItems.add(stack.getDisplayName());
                 this.getItems().set(i, ItemStack.EMPTY);
             }
         }
         for (int i = 0; i < playerIn.getInventory().getContainerSize(); ++i) {
-            if (ItemBlacklist.shouldDelete(player, playerIn.getInventory().getItem(i))) {
+            ItemStack stack = playerIn.getInventory().getItem(i);
+            if (ItemBlacklist.shouldDelete(player, stack)) {
+                bannedItems.add(stack.getDisplayName());
                 playerIn.getInventory().setItem(i, ItemStack.EMPTY);
             }
+        }
+        if (!bannedItems.isEmpty()) {
+            Component message = ComponentUtils.formatList(bannedItems, Component.literal(", "));
+            playerIn.displayClientMessage(ModComponents.ITEMS_REMOVED.create(message), false);
         }
     }
 }

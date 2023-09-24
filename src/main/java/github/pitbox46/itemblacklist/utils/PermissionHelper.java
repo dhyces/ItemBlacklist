@@ -9,22 +9,24 @@ import net.minecraft.world.entity.player.Player;
 
 public class PermissionHelper {
     public static boolean hasPermission(Player player, String permission) {
-        if (BuiltInPermissions.LEVEL_PATTERN.matcher(permission).matches()) {
+        if (BuiltInPermissions.isLevelPermission(permission)) {
             int permissionLevel;
             if (player instanceof ServerPlayer serverPlayer) {
                 permissionLevel = serverPlayer.server.getProfilePermissions(player.getGameProfile());
-            } else {
+            } else if (player != null) {
                 permissionLevel = ((EntityAccessor)player).invokeGetPermissionLevel();
+            } else {
+                return true;
             }
             int minPermissionLevel = BuiltInPermissions.getFrom(permission);
-            return permissionLevel >= minPermissionLevel;
+            return permissionLevel > minPermissionLevel;
         }
         return Permissions.check(player, permission);
     }
 
     public static boolean hasPermission(CommandSourceStack sourceStack, String permission) {
-        if (BuiltInPermissions.LEVEL_PATTERN.matcher(permission).matches()) {
-            int minPermissionLevel = Integer.decode(String.valueOf(permission.charAt(permission.length()-1)));
+        if (BuiltInPermissions.isLevelPermission(permission)) {
+            int minPermissionLevel = Integer.decode(permission.substring(permission.length()-1));
             return sourceStack.hasPermission(minPermissionLevel);
         }
         return Permissions.check(sourceStack, permission);

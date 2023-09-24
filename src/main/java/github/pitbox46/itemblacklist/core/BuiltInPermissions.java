@@ -1,7 +1,12 @@
 package github.pitbox46.itemblacklist.core;
 
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.commands.CommandSourceStack;
 import org.jetbrains.annotations.Range;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 public final class BuiltInPermissions {
@@ -32,7 +37,21 @@ public final class BuiltInPermissions {
         };
     }
 
+    public static String[] values() {
+        return new String[] {LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4};
+    }
+
     public static boolean isLevelPermission(String permission) {
         return LEVEL_PATTERN.matcher(permission).matches();
+    }
+
+    public static CompletableFuture<Suggestions> createSuggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) {
+        return builder
+                .suggest("level_0", () -> "Players with no permissions")
+                .suggest("level_1", () -> "Players who bypass spawn protections")
+                .suggest("level_2", () -> "Players with cheat commands")
+                .suggest("level_3", () -> "Players with multiplayer management roles and commands")
+                .suggest("level_4", () -> "Players who are server operators")
+                .buildFuture();
     }
 }

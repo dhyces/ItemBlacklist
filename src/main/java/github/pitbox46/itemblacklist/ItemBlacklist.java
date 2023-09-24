@@ -2,11 +2,8 @@ package github.pitbox46.itemblacklist;
 
 import com.mojang.brigadier.CommandDispatcher;
 import github.pitbox46.itemblacklist.api.BanItemEvent;
-import github.pitbox46.itemblacklist.core.BanData;
-import github.pitbox46.itemblacklist.core.BasicDefaultConfig;
-import github.pitbox46.itemblacklist.core.Config;
-import github.pitbox46.itemblacklist.core.ModCommands;
-import github.pitbox46.itemblacklist.mixins.EntityAccessor;
+import github.pitbox46.itemblacklist.api.ServerSavedCallback;
+import github.pitbox46.itemblacklist.core.*;
 import github.pitbox46.itemblacklist.utils.FileUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -16,7 +13,6 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.CloseableResourceManager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -25,15 +21,13 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nonnull;
 import java.nio.file.Path;
 
 public class ItemBlacklist implements ModInitializer {
     public static final Logger LOGGER = LogManager.getLogger();
-    private static Config config;
+    private static ConfigFile configFile;
     public static MinecraftServer serverInstance;
     public static final Path DEFAULT_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("itemblacklist.json");
-    private static Path worldConfigPath;
 
     @Override
     public void onInitialize() {
@@ -41,38 +35,40 @@ public class ItemBlacklist implements ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPING.register(this::serverStopping);
         CommandRegistrationCallback.EVENT.register(this::registerCommands);
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(this::endDataPackReload);
-        BasicDefaultConfig.createIfAbsent(DEFAULT_CONFIG_PATH);
+        ServerSavedCallback.EVENT.register(this::onServerSaved);
+        FileUtils.createIfAbsent(DEFAULT_CONFIG_PATH, Config.createDefaultConfig());
     }
 
     private void endDataPackReload(MinecraftServer server, CloseableResourceManager resourceManager, boolean success) {
-        config.reloadIfChanged();
+        configFile.reload();
         LOGGER.info("Config file reloaded");
     }
 
     private void serverStarted(MinecraftServer server) {
         Path worldConfigFolder = server.getWorldPath(LevelResource.ROOT);
-        worldConfigPath = FileUtils.initialize(worldConfigFolder, "serverconfig", "itemblacklist.json");
-        config = new Config(worldConfigPath);
-        config.load();
+        Path worldConfigPath = FileUtils.initialize(worldConfigFolder, "serverconfig", "itemblacklist.json");
+        configFile = new ConfigFile(worldConfigPath);
+        configFile.load();
         serverInstance = server;
     }
 
     private void serverStopping(MinecraftServer server) {
-        config.saveAndClose();
+        configFile.saveAndClose();
         LOGGER.info("Config saved to file");
-        worldConfigPath = null;
-        config = null;
+        configFile = null;
         serverInstance = null;
     }
 
     private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext, Commands.CommandSelection environment) {
-//        if (environment.includeDedicated) { //TODO:
-            ModCommands.register(dispatcher, buildContext);
-//        }
+        ModCommands.register(dispatcher, buildContext);
+    }
+
+    private void onServerSaved(boolean suppressLog, boolean flush, boolean forced) {
+        configFile.save();
     }
 
     public static Config getConfig() {
-        return config;
+        return configFile.getConfig();
     }
 
     public static boolean shouldDelete(Player player, ItemStack stack) {

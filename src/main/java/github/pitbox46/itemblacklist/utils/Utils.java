@@ -10,6 +10,8 @@ import github.pitbox46.itemblacklist.core.BanData;
 import github.pitbox46.itemblacklist.core.ItemWithTag;
 import github.pitbox46.itemblacklist.mixins.TransientCraftingContainerAccessor;
 import github.pitbox46.itemblacklist.mixins.ServerPlayerAccessor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
@@ -32,11 +34,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class Utils {
     public static final Codec<ItemWithTag> ITEM_OR_STACK = Codec.either(BuiltInRegistries.ITEM.byNameCodec(), ItemWithTag.CODEC).xmap(
-            fsEither -> fsEither.map(item -> new ItemWithTag(item, null), Function.identity()),
-            stack -> stack.tag() == null ? Either.left(stack.item()) : Either.right(stack)
+            fsEither -> fsEither.map(ItemWithTag::fromItem, Function.identity()),
+            itemWithTag -> !itemWithTag.hasTag() ? Either.left(itemWithTag.item()) : Either.right(itemWithTag)
     );
 
     public static void broadcastMessage(MinecraftServer server, Component component) {
@@ -64,7 +68,7 @@ public class Utils {
                 }
             }
         }
-        return ClientUtils.getClientPlayer();
+        return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT ? ClientUtils.getClientPlayer() : null;
     }
 
     public static boolean areTagsSimilar(Tag tag, Tag tag2) {

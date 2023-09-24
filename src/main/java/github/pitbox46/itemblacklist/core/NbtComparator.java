@@ -1,10 +1,16 @@
 package github.pitbox46.itemblacklist.core;
 
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.serialization.Codec;
 import github.pitbox46.itemblacklist.utils.Utils;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.StringRepresentable;
 import org.apache.commons.lang3.function.ToBooleanBiFunction;
+
+import java.util.concurrent.CompletableFuture;
 
 public enum NbtComparator implements StringRepresentable {
     // Both tags contain all the same tag data
@@ -57,6 +63,14 @@ public enum NbtComparator implements StringRepresentable {
     @Override
     public String getSerializedName() {
         return safeName;
+    }
+
+    public static CompletableFuture<Suggestions> createSuggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) {
+        return builder
+                .suggest("none", () -> "Only compares the item")
+                .suggest("partial", () -> "NBT on this item is matched on tested, but the tested item can have more NBT")
+                .suggest("strict", () -> "All NBT on this item must be present on the tested item")
+                .buildFuture();
     }
 
     public interface TagComparison extends ToBooleanBiFunction<CompoundTag, CompoundTag> {

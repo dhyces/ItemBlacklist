@@ -9,6 +9,7 @@
     "ContainerMenuMixin",
     "EntityAccessor",
     "InventoryMenuAccessor",
+    "ItemInputAccessor",
     "MerchantMenuMixin",
     "MinecraftServerMixin",
     "ServerPlayerAccessor",

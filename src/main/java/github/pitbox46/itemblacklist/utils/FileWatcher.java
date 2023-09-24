@@ -16,7 +16,7 @@ public class FileWatcher extends Thread {
     private boolean hasFileChanged;
     private FileTime lastTime;
 
-    public FileWatcher(Path path, Consumer<Path> onFileRemoved, @NotNull String name) {
+    public FileWatcher(Path path, Consumer<Path> onFileRemoved, String name) {
         super("Watcher thread-" + name);
         this.path = path;
         this.onFileRemoved = onFileRemoved;
