@@ -71,32 +71,37 @@ public class Utils {
         return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT ? ClientUtils.getClientPlayer() : null;
     }
 
-    public static boolean areTagsSimilar(Tag tag, Tag tag2) {
-        if (tag instanceof ShortTag || tag instanceof ByteTag || tag instanceof IntTag) {
-            if (((NumericTag)tag).getAsInt() != ((NumericTag)tag2).getAsInt()) {
+    // if the config part is null, just return true
+    public static boolean areTagsSimilar(Tag stackTag, @Nullable Tag configTag) {
+        if (configTag == null) {
+            return true;
+        }
+        if (stackTag instanceof ShortTag || stackTag instanceof ByteTag || stackTag instanceof IntTag) {
+            if (((NumericTag)stackTag).getAsInt() != ((NumericTag)configTag).getAsInt()) {
                 return false;
             }
-        } else if (tag instanceof FloatTag || tag instanceof DoubleTag) {
-            if (((NumericTag)tag).getAsDouble() != ((NumericTag)tag2).getAsDouble()) {
+        } else if (stackTag instanceof FloatTag || stackTag instanceof DoubleTag) {
+            if (((NumericTag)stackTag).getAsDouble() != ((NumericTag)configTag).getAsDouble()) {
                 return false;
             }
-        } else if (tag instanceof LongTag) {
-            if (((NumericTag)tag).getAsLong() != ((NumericTag)tag2).getAsLong()) {
+        } else if (stackTag instanceof LongTag) {
+            if (((NumericTag)stackTag).getAsLong() != ((NumericTag)configTag).getAsLong()) {
                 return false;
             }
-        } else if (tag instanceof StringTag) {
-            if (!tag.equals(tag2) && !testResourceLocations((StringTag) tag, (StringTag) tag2)) {
+        } else if (stackTag instanceof StringTag) {
+            if (!stackTag.equals(configTag) && !testResourceLocations((StringTag) stackTag, (StringTag) configTag)) {
                 return false;
             }
-        } else if (tag instanceof CompoundTag compoundTag) {
+        } else if (stackTag instanceof CompoundTag compoundTag) {
             for (String key : compoundTag.getAllKeys()) {
-                if (!areTagsSimilar(compoundTag.get(key), ((CompoundTag)tag2).get(key))) {
+                if (!areTagsSimilar(compoundTag.get(key), ((CompoundTag)configTag).get(key))) {
                     return false;
                 }
             }
-        } else if (tag instanceof CollectionTag<?> collectionTag) {
-            for (int i = 0; i < collectionTag.size(); i++) {
-                if (!areTagsSimilar(collectionTag.get(i), ((CollectionTag<?>)tag2).get(i))) {
+        } else if (stackTag instanceof CollectionTag<?> collectionTag) {
+            int maxTests = Math.min(collectionTag.size(), ((CollectionTag<?>)configTag).size());
+            for (int i = 0; i < maxTests; i++) {
+                if (!areTagsSimilar(collectionTag.get(i), ((CollectionTag<?>)configTag).get(i))) {
                     return false;
                 }
             }
@@ -104,6 +109,7 @@ public class Utils {
         return true;
     }
 
+    // test so that if the config value says "sharpness" but the stack tag says "minecraft:sharpness", it still works
     private static boolean testResourceLocations(StringTag tag, StringTag tag2) {
         if (ResourceLocation.isValidResourceLocation(tag.getAsString()) && ResourceLocation.isValidResourceLocation(tag2.getAsString())) {
             return new ResourceLocation(tag.getAsString()).equals(new ResourceLocation(tag2.getAsString()));
