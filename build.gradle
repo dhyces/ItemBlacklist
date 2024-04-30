@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.2.+'
+    id 'fabric-loom' version '1.6-SNAPSHOT'
     id 'java'
     id 'idea'
 }
@@ -20,14 +20,12 @@ dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.layered() {
         officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-1.19.3:2023.03.12@zip")
+        parchment("org.parchmentmc.data:parchment-1.20.1:${parchment_version}@zip")
     }
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     modImplementation(include("me.lucko:fabric-permissions-api:0.3-SNAPSHOT"))
-
-    implementation "com.google.code.findbugs:jsr305:3.0.2"
 }
 
 idea {
