@@ -15,7 +15,6 @@ import github.pitbox46.itemblacklist.utils.PermissionHelper;
 import github.pitbox46.itemblacklist.utils.Utils;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.item.ItemArgument;
