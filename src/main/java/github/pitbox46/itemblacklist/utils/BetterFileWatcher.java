@@ -1,5 +1,7 @@
 package github.pitbox46.itemblacklist.utils;
 
+import github.pitbox46.itemblacklist.ItemBlacklist;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.function.Consumer;
@@ -12,7 +14,8 @@ public class BetterFileWatcher extends Thread implements AutoCloseable {
     private boolean serving;
 
     public BetterFileWatcher(Path file, Consumer<Path> onFileRemoved, Consumer<Path> onFileModified, String name) {
-        super("FileWatcher thread-" + name);
+        super("FileWatcher thread - " + name);
+        setDaemon(true);
         this.file = file;
         this.onFileRemoved = onFileRemoved;
         this.onFileModified = onFileModified;
@@ -37,6 +40,10 @@ public class BetterFileWatcher extends Thread implements AutoCloseable {
             try {
                 key = watchService.take();
             } catch (InterruptedException e) {
+                continue;
+            } catch (ClosedWatchServiceException ignored) {
+                serving = false;
+                ItemBlacklist.LOGGER.info("Watch service closed, stopping file watcher");
                 continue;
             }
             for (WatchEvent<?> event : key.pollEvents()) {
