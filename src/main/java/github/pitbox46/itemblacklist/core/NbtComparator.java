@@ -8,21 +8,21 @@ import github.pitbox46.itemblacklist.utils.Utils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.StringRepresentable;
-import org.apache.commons.lang3.function.ToBooleanBiFunction;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiPredicate;
 
 public enum NbtComparator implements StringRepresentable {
     // Both tags contain all the same tag data
     STRICT("strict", CompoundTag::equals),
     // The tested tag contains all the data from the other tag. It may have more, but must at least match the other data
-    PARTIAL("partial", (tag, tag2) -> {
-        for (String key : tag2.getAllKeys()) {
-            if (!tag.contains(key)) {
+    PARTIAL("partial", (stackTag, configTag) -> {
+        for (String key : configTag.getAllKeys()) {
+            if (!stackTag.contains(key)) {
                 return false;
             }
 
-            if (!Utils.areTagsSimilar(tag.get(key), tag2.get(key))) {
+            if (!Utils.areTagsSimilar(stackTag.get(key), configTag.get(key))) {
                 return false;
             }
         }
@@ -32,9 +32,9 @@ public enum NbtComparator implements StringRepresentable {
     NONE("none", TagComparison.alwaysTrue());
 
     private final String safeName;
-    private final ToBooleanBiFunction<CompoundTag, CompoundTag> tagComparison;
+    private final BiPredicate<CompoundTag, CompoundTag> tagComparison;
 
-    NbtComparator(String safeName, ToBooleanBiFunction<CompoundTag, CompoundTag> tagComparison) {
+    NbtComparator(String safeName, BiPredicate<CompoundTag, CompoundTag> tagComparison) {
         this.safeName = safeName;
         this.tagComparison = tagComparison;
     }
@@ -50,14 +50,14 @@ public enum NbtComparator implements StringRepresentable {
         };
     }
 
-    public boolean compareTags(CompoundTag testStackTag, CompoundTag otherTag) {
-        if (testStackTag == otherTag) {
+    public boolean compareTags(CompoundTag testStackTag, CompoundTag configTag) {
+        if (testStackTag == configTag) {
             return true;
         }
-        if (testStackTag == null || otherTag == null) {
+        if (testStackTag == null || configTag == null) {
             return false;
         }
-        return tagComparison.applyAsBoolean(testStackTag, otherTag);
+        return tagComparison.test(testStackTag, configTag);
     }
 
     @Override
@@ -73,8 +73,8 @@ public enum NbtComparator implements StringRepresentable {
                 .buildFuture();
     }
 
-    public interface TagComparison extends ToBooleanBiFunction<CompoundTag, CompoundTag> {
-        static ToBooleanBiFunction<CompoundTag, CompoundTag> alwaysTrue() {
+    public interface TagComparison extends BiPredicate<CompoundTag, CompoundTag> {
+        static BiPredicate<CompoundTag, CompoundTag> alwaysTrue() {
             return (compoundTag, compoundTag2) -> true;
         }
     }
