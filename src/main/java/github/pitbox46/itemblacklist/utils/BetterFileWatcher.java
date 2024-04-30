@@ -33,6 +33,7 @@ public class BetterFileWatcher extends Thread implements AutoCloseable {
         super.start();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
         while (serving) {
@@ -47,7 +48,7 @@ public class BetterFileWatcher extends Thread implements AutoCloseable {
                 continue;
             }
             for (WatchEvent<?> event : key.pollEvents()) {
-                WatchEvent<Path> fileEvent = cast(event);
+                WatchEvent<Path> fileEvent = (WatchEvent<Path>) event;
                 if (!fileEvent.context().equals(file)) {
                     continue;
                 }
@@ -58,11 +59,6 @@ public class BetterFileWatcher extends Thread implements AutoCloseable {
                 }
             }
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> WatchEvent<T> cast(WatchEvent<?> event) {
-        return (WatchEvent<T>) event;
     }
 
     @Override
